@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression from 'compression';
+import { randomBytes } from 'crypto';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -13,8 +14,34 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  // Security middleware
-  app.use(helmet());
+  // Generate x-request-id BEFORE guards run (middleware, not interceptor)
+  app.use((req: any, res: any, next: any) => {
+    const requestId =
+      req.headers['x-request-id'] ||
+      `req_${randomBytes(12).toString('hex')}`;
+    req.headers['x-request-id'] = requestId;
+    res.setHeader('x-request-id', requestId);
+    next();
+  });
+
+  // Security middleware (relax CSP for Swagger)
+  app.use((req: any, res: any, next: any) => {
+    if (req.path.startsWith('/api/docs')) {
+      // Swagger needs inline scripts and styles
+      helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", 'data:', 'https:'],
+          },
+        },
+      })(req, res, next);
+    } else {
+      helmet()(req, res, next);
+    }
+  });
   app.use(compression());
 
   // CORS (even though frontend rewrite makes it unused, keep allow-list)

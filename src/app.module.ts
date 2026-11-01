@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
 import { TenancyModule } from './tenancy/tenancy.module';
@@ -26,9 +24,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
     HealthModule,
     CatalogModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     {
       provide: APP_FILTER,
       useClass: ProblemJsonExceptionFilter,
