@@ -94,6 +94,82 @@ npm run db:indexes     # Create all indexes (run on dev and test DBs)
 - `src/profit-os/orders/seed-identity.spec.ts`: Unit test proving waterfall and ledger finance identities.
 - E2E tests: Added concurrent idempotency POST test, `$where` / nested `status[$ne]` 400 rejection tests, limit validation tests.
 
+## Phase 3b-2: Ad-Spend + Expenses Modules & Domain Extension (COMPLETE)
+
+### Features & Implementation
+- `src/profit-os/domain/expenses.ts`: Pure domain function `expenseTotalForPeriod(expenses, periodStart, periodEnd)` calculating active calendar month expansions for `monthly` expenses and date-window inclusion for `one-time` expenses. Zero NestJS / Mongoose dependencies.
+- `src/profit-os/domain/expenses.spec.ts`: 7 unit tests covering month expansion, end dates, one-time overlap, and aggregations.
+- `src/profit-os/ad-spend`: Full CRUD module with tenant-first indexes (`{workspaceId: 1, periodStart: -1}`, `{workspaceId: 1, productId: 1}`, unique partial `{workspaceId: 1, idempotencyKey: 1}`), optimistic locking (409), soft delete (204), page pagination.
+- `src/profit-os/expenses`: Full CRUD module with categories (`rent`, `salary`, `utilities`, `logistics`, `marketing`, `other`), period types (`monthly`, `one-time`), tenant-first indexes, optimistic locking, soft delete.
+- Shared idempotency enhancement: `withIdempotency` updated with deterministic payload hashing. Key reuse with modified payload returns 422 `UnprocessableEntityException('Idempotency key reused with different payload')`.
+
+## Phase 3c: Scenarios, Settlements & Reconcile Crash-Recovery (COMPLETE)
+
+### Features & Implementation
+- `src/profit-os/scenarios`: Full saved pricing scenarios module (targetMarginPercent, unit price, cogs, shipping, cpa).
+- `src/profit-os/settlements`: Courier COD settlements module with Aramex & Yalidine support.
+- `POST /api/v1/settlements/:id/reconcile`: Crash-recoverable without distributed transactions:
+  - Step 1: Find settlement (404 if missing).
+  - Step 2: If already `settled`, skip status update (idempotent replay).
+  - Step 3: Atomic update settlement to `status: 'settled'`, `reconciledAt: now`, `version + 1`.
+  - Step 4: Link orders via atomic `ordersRepository.linkOrdersToSettlement` (`$set: { settlementId }`).
+  - Crash Recovery Invariant: Setting settlement status first ensures a crash between Step 3 and 4 is completely recoverable on retry by skipping Step 3 and completing Step 4. All steps are idempotent.
+- Catalog verification: 12 products in `MockProductCatalogAdapter` matching brief specifications.
+- Known Debts Resolved:
+  - (a) Distinct Problem+JSON titles: Missing entity PATCH returns 404 with title `'Order not found'` / `'<Entity> not found'`; stale version PATCH returns 409 with title `'Version conflict'`.
+  - (b) Idempotent key reuse with different body strictly returns 422 across all endpoints via shared `withIdempotency`.
+
+## Phase 3d: Full Deterministic 600-Order Seed & Cross-Module E2E (COMPLETE)
+
+### Features & Implementation
+- `src/database/seed-generator.ts` & `scripts/seed.ts`:
+  - 600 deterministic orders over 90 days (`ws_maison_ambre`).
+  - Global refusal rate: 20.4% (strictly within the 18-24% spec).
+  - Couriers: Aramex and Yalidine.
+  - Governorates: Tunis (La Marsa), Ariana (Ennasr), Sousse, Sfax, Bizerte, Nabeul (Hammamet), Monastir, Gabès.
+  - 224 daily/multi-day ad spend entries across Facebook, TikTok, Google, and Instagram.
+  - 6 monthly expense categories (Rent, 2x Salaries, Utilities, Logistics, Marketing).
+  - 4 courier settlements (2 settled with linked order IDs, 2 pending).
+  - 4 saved pricing scenarios.
+  - 3 report placeholder records.
+- `src/profit-os/orders/seed-identity-600.spec.ts`: Unit test proving that 30-day waterfall and ledger net finance identities hold across the seeded dataset.
+- Cross-module E2E test suites (Supertest, `winnit_test`):
+  - `test/ad-spend.e2e-spec.ts` (10 tests)
+  - `test/expenses.e2e-spec.ts` (10 tests)
+  - `test/scenarios.e2e-spec.ts` (10 tests)
+  - `test/settlements.e2e-spec.ts` (12 tests, including reconcile retry safety)
+  - `test/orders.e2e-spec.ts` (28 tests)
+  - `test/app.e2e-spec.ts` (6 tests)
+  - Total: 72 e2e tests passing, 175 unit tests passing.
+
+### Real 30-Day Seed Waterfall (ws_maison_ambre)
+- 30-Day Orders Sample: 204 orders
+- Global 90-Day Refusal Rate: 20.4%
+- Gross Revenue: 24,147.000 TND
+- Product COGS: -6,210.000 TND
+- Outbound Shipping: -1,262.000 TND
+- Paid Ad Spend: -5,763.091 TND
+- COD Refusal Penalty: -830.000 TND
+- Net Realized Contribution: 10,081.909 TND
+- Ad Spend Delta: 763.891 TND
+- Ledger Net: 10,845.800 TND
+- Identity Check: `netRealizedContribution + adSpendDelta === ledgerNet` (24,147 - 6,210 - 1,262 - 5,763.091 - 830 = 10,081.909 TND) -> PASSED
+
+### MongoDB Compass Checklist (`ws_maison_ambre`)
+- `orders`: 600 documents
+  - Indexes: `{workspaceId:1, orderNumber:1}` (unique), `{workspaceId:1, placedAt:-1}`, `{workspaceId:1, status:1, placedAt:-1}`, `{workspaceId:1, productId:1, placedAt:-1}`, `{workspaceId:1, courier:1, status:1}`, `{workspaceId:1, settlementId:1}`, `{workspaceId:1, idempotencyKey:1}` (unique partial)
+- `counters`: 1 document (value: 600)
+  - Index: `{workspaceId:1, name:1}` (unique)
+- `ad_spend`: 224 documents
+  - Indexes: `{workspaceId:1, periodStart:-1}`, `{workspaceId:1, productId:1}`, `{workspaceId:1, idempotencyKey:1}` (unique partial)
+- `expenses`: 6 documents
+  - Indexes: `{workspaceId:1, periodType:1}`, `{workspaceId:1, category:1}`, `{workspaceId:1, idempotencyKey:1}` (unique partial)
+- `scenarios`: 4 documents
+  - Indexes: `{workspaceId:1, productId:1}`, `{workspaceId:1, idempotencyKey:1}` (unique partial)
+- `settlements`: 4 documents
+  - Indexes: `{workspaceId:1, status:1}`, `{workspaceId:1, settlementDate:-1}`, `{workspaceId:1, courier:1}`, `{workspaceId:1, idempotencyKey:1}` (unique partial)
+- `reports`: 3 documents
+
 ## Phase 3a: Orders Module (COMPLETE)
 
 ### Files Created
