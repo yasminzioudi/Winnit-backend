@@ -6,6 +6,8 @@ import { DatabaseModule } from './database/database.module';
 import { TenancyModule } from './tenancy/tenancy.module';
 import { HealthModule } from './health/health.module';
 import { CatalogModule } from './catalog/catalog.module';
+import { CacheModule } from './common/cache/cache.module';
+import { OrdersModule } from './profit-os/orders/orders.module';
 import { ProblemJsonExceptionFilter } from './common/filters/problem-json-exception.filter';
 import { RequestIdInterceptor } from './common/interceptors/request-id.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -20,9 +22,11 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
         limit: 120,
       },
     ]),
+    CacheModule,
     TenancyModule,
     HealthModule,
     CatalogModule,
+    OrdersModule,
   ],
   providers: [
     {
