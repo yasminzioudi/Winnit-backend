@@ -16,12 +16,12 @@ describe('Settlements API (e2e)', () => {
 
   beforeAll(async () => {
     mongoClient = new MongoClient(
-      process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/winnit_test',
+      process.env.MONGODB_URI_TEST || 'mongodb://127.0.0.1:27017/winnit_test',
     );
     await mongoClient.connect();
 
     mongooseConnection = mongoose.createConnection(
-      process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/winnit_test',
+      process.env.MONGODB_URI_TEST || 'mongodb://127.0.0.1:27017/winnit_test',
     );
     await mongooseConnection.asPromise();
     await ensureIndexes(mongooseConnection);

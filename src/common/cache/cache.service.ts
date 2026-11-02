@@ -1,15 +1,23 @@
 import { Injectable } from '@nestjs/common';
 
+export interface ICacheService {
+  set(key: string, value: unknown, ttlSeconds?: number): void;
+  get<T>(key: string): T | null;
+  delete(key: string): void;
+  invalidateWorkspace(workspaceId: string): void;
+  clear(): void;
+}
+
 interface CacheEntry {
   value: unknown;
   expiresAt: number;
 }
 
 @Injectable()
-export class CacheService {
+export class CacheService implements ICacheService {
   private cache = new Map<string, CacheEntry>();
 
-  set(key: string, value: unknown, ttlSeconds: number = 300): void {
+  set(key: string, value: unknown, ttlSeconds: number = 60): void {
     const expiresAt = Date.now() + ttlSeconds * 1000;
     this.cache.set(key, { value, expiresAt });
   }

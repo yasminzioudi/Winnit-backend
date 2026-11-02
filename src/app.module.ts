@@ -12,6 +12,10 @@ import { AdSpendModule } from './profit-os/ad-spend/ad-spend.module';
 import { ExpensesModule } from './profit-os/expenses/expenses.module';
 import { ScenariosModule } from './profit-os/scenarios/scenarios.module';
 import { SettlementsModule } from './profit-os/settlements/settlements.module';
+import { AnalyticsModule } from './profit-os/analytics/analytics.module';
+import { InsightsModule } from './profit-os/insights/insights.module';
+import { PricingModule } from './profit-os/pricing/pricing.module';
+import { AiModule } from './profit-os/ai/ai.module';
 import { ProblemJsonExceptionFilter } from './common/filters/problem-json-exception.filter';
 import { RequestIdInterceptor } from './common/interceptors/request-id.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -35,6 +39,10 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
     ExpensesModule,
     ScenariosModule,
     SettlementsModule,
+    AnalyticsModule,
+    InsightsModule,
+    PricingModule,
+    AiModule,
   ],
   providers: [
     {

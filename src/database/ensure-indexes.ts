@@ -49,6 +49,7 @@ export async function ensureIndexes(connection: Connection): Promise<void> {
   const expensesCollection = connection.collection('expenses');
   const scenariosCollection = connection.collection('scenarios');
   const settlementsCollection = connection.collection('settlements');
+  const reportsCollection = connection.collection('reports');
 
   // Orders indexes
   const orderIndexes: IndexSpec[] = [
@@ -156,10 +157,18 @@ export async function ensureIndexes(connection: Connection): Promise<void> {
     },
   ];
 
+  // Reports indexes
+  const reportIndexes: IndexSpec[] = [
+    {
+      key: { workspaceId: 1, createdAt: -1 },
+    },
+  ];
+
   await createIndexesWithConflictRetry(ordersCollection, orderIndexes);
   await createIndexesWithConflictRetry(countersCollection, countersIndexes);
   await createIndexesWithConflictRetry(adSpendCollection, adSpendIndexes);
   await createIndexesWithConflictRetry(expensesCollection, expenseIndexes);
   await createIndexesWithConflictRetry(scenariosCollection, scenarioIndexes);
   await createIndexesWithConflictRetry(settlementsCollection, settlementIndexes);
+  await createIndexesWithConflictRetry(reportsCollection, reportIndexes);
 }

@@ -203,3 +203,53 @@ npm run db:indexes     # Create all indexes (run on dev and test DBs)
 - Committed copies: `winnit-backend/contracts-golden.json`, `winnit-frontend/contracts-golden.json`
 - Drift guard: SHA-256 hash test in both repos ensures copies match canonical
 - Structure: unitEconomics, orders (6 test orders), waterfall expectations, settlements, COD reconciliation
+
+## Phase 4: Analytics, Insights, Pricing Optimizer & Performance (COMPLETE)
+
+### Files Created / Modified
+- `src/profit-os/analytics/`
+  - `analytics.module.ts`: Mongoose schemas (Order, AdSpend, Expense, Settlement), CatalogModule, CacheModule
+  - `analytics.repository.ts`: Tenant-first queries, aggregation pipelines (`$facet` for COD aging + byCourier), index-backed explain
+  - `analytics.service.ts`: Waterfall, KPIs, fixed expenses via `expenseTotalForPeriod`, COD reconciliation, Winners ranking via `calculateWinnerScore`, 60s per-workspace cache
+  - `analytics.controller.ts`: 10 endpoints (`/summary`, `/waterfall`, `/timeseries`, `/by-product`, `/by-courier`, `/couriers`, `/by-governorate`, `/geo`, `/cod`, `/winners`), `@UseInterceptors(EtagInterceptor)`
+  - `analytics.service.spec.ts`: 7 unit tests (summary identities, timeseries, product, courier, gov, cod, winners)
+  - `dto/query-analytics.dto.ts`: Date range and timeseries query validation DTOs
+  - `dto/analytics-responses.dto.ts`: Typed response DTOs for all analytics endpoints
+- `src/common/cache/cache.service.ts`: `ICacheService` interface, 60s default TTL, `invalidateWorkspace()` on all write operations
+- `src/common/interceptors/etag.interceptor.ts`: SHA-256 weak ETag generation and `If-None-Match` -> `304 Not Modified`
+- `src/profit-os/insights/`
+  - `insights.module.ts`: DI provider binding `INSIGHTS_PROVIDER` -> `RuleBasedInsightsProvider`
+  - `insights.controller.ts`: `GET /insights` with ETag support
+  - `insights.service.ts`: Builds privacy-safe `FinancialSnapshot` (no PII), calls provider
+  - `ports/insights-provider.port.ts`: `InsightsProvider` interface & `INSIGHTS_PROVIDER` injection token
+  - `dto/financial-snapshot.dto.ts`: Anonymized financial summary DTO
+  - `providers/rule-based-insights.provider.ts`: Rule-based heuristics (`checkRefusalRate`, `checkROASBelowBreakEven`, `checkPendingPayoutsAge`)
+- `src/profit-os/pricing/`
+  - `pricing.module.ts`, `pricing.service.ts`, `pricing.controller.ts`
+  - `dto/optimize-price.dto.ts`: Bounded inputs validation, rate-throttled `@Throttle({ default: { limit: 60, ttl: 60000 } })`
+- `src/profit-os/ai/`:
+  - `ai.module.ts`: Placeholder `@Module({})`
+  - `README.md`: Architectural extension point documentation for future LLM integration
+- `scripts/benchmark-analytics.ts`: 10,000 orders benchmark on `winnit_test` with `explain('executionStats')`
+- `test/analytics.e2e-spec.ts`: 15 comprehensive e2e tests
+
+### Verified Features & Metrics
+- ✅ 194 unit tests passing across 25 suites (`npm test`)
+- ✅ 87 e2e tests passing across 7 suites (`npm run test:e2e`)
+- ✅ 0 lint errors, 0 warnings (`npm run lint` with oxlint)
+- ✅ 0 TypeScript errors (`npx tsc --noEmit`)
+- ✅ Successful build (`npm run build`)
+- ✅ Deterministic seed verified: 600 orders, 224 ad spend, 6 expenses, 4 settlements, 4 scenarios, 3 reports
+- ✅ Performance: 10,000 orders benchmark on `winnit_test`:
+  - Index Scan: `IXSCAN` on `workspaceId_1_placedAt_-1`
+  - Docs Examined vs Returned Ratio: `1.00` (optimal)
+  - Latency: p50 = 10.97ms, p90 = 12.16ms, **p95 = 16.87ms** (< 200ms target ✅)
+  - Cleanup: benchmark dataset deleted from `winnit_test`
+- ✅ PORT=4010 real verification:
+  - `GET /api/v1/analytics/summary` -> 200 with ETag `W/"..."`
+  - `GET /api/v1/analytics/summary` with `If-None-Match` -> `304 Not Modified`
+  - `GET /api/v1/analytics/summary` with invalid date range (`from > to`) -> `400 Bad Request` Problem+JSON
+  - `GET /api/v1/analytics/timeseries`, `by-product`, `by-courier`, `by-governorate`, `cod`, `winners` -> 200
+  - `GET /api/v1/insights` -> 200 rule-based insights
+  - `POST /api/v1/pricing/optimize` -> 200 with optimal curve and disclaimer
+

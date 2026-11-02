@@ -3,6 +3,13 @@ import * as dotenv from 'dotenv';
 import {
   generateSeedDataset,
   WORKSPACE_ID,
+  type SeedOrder,
+  type SeedSettlement,
+  type SeedAdSpend,
+  type SeedExpense,
+  type SeedScenario,
+  type SeedReport,
+  type SeedCounter,
 } from '../src/database/seed-generator';
 import {
   calculateWaterfall,
@@ -41,35 +48,35 @@ async function seed() {
     const dataset = generateSeedDataset();
 
     // 1. Insert Orders
-    await db.collection('orders').insertMany(dataset.orders as any[]);
+    await db.collection<SeedOrder>('orders').insertMany(dataset.orders);
     console.log(`✓ Inserted ${dataset.orders.length} orders over 90 days`);
 
     // 2. Set Counter to 600
-    await db.collection('counters').insertOne({
+    await db.collection<SeedCounter>('counters').insertOne({
       workspaceId: WORKSPACE_ID,
       name: 'order',
       value: dataset.orders.length,
-    } as any);
+    });
     console.log(`✓ Initialized atomic order counter to ${dataset.orders.length}`);
 
     // 3. Insert Settlements
-    await db.collection('settlements').insertMany(dataset.settlements as any[]);
+    await db.collection<SeedSettlement>('settlements').insertMany(dataset.settlements);
     console.log(`✓ Inserted ${dataset.settlements.length} courier settlements`);
 
     // 4. Insert Ad Spend
-    await db.collection('ad_spend').insertMany(dataset.adSpends as any[]);
+    await db.collection<SeedAdSpend>('ad_spend').insertMany(dataset.adSpends);
     console.log(`✓ Inserted ${dataset.adSpends.length} ad spend entries`);
 
     // 5. Insert Fixed Expenses
-    await db.collection('expenses').insertMany(dataset.expenses as any[]);
+    await db.collection<SeedExpense>('expenses').insertMany(dataset.expenses);
     console.log(`✓ Inserted ${dataset.expenses.length} monthly expense categories`);
 
     // 6. Insert Pricing Scenarios
-    await db.collection('scenarios').insertMany(dataset.scenarios as any[]);
+    await db.collection<SeedScenario>('scenarios').insertMany(dataset.scenarios);
     console.log(`✓ Inserted ${dataset.scenarios.length} saved pricing scenarios`);
 
     // 7. Insert Reports
-    await db.collection('reports').insertMany(dataset.reports as any[]);
+    await db.collection<SeedReport>('reports').insertMany(dataset.reports);
     console.log(`✓ Inserted ${dataset.reports.length} report placeholder records`);
 
     // 30-Day Waterfall Metrics
@@ -87,9 +94,9 @@ async function seed() {
       0,
     );
 
-    const waterfall = calculateWaterfall(orders30d as any, totalAdSpend30d);
-    const ledgerNet = calculateLedgerNet(orders30d as any);
-    const adSpendDelta = calculateAdSpendDelta(orders30d as any, totalAdSpend30d);
+    const waterfall = calculateWaterfall(orders30d, totalAdSpend30d);
+    const ledgerNet = calculateLedgerNet(orders30d);
+    const adSpendDelta = calculateAdSpendDelta(orders30d, totalAdSpend30d);
 
     const resolvedOrders = dataset.orders.filter(
       (o) => o.status === 'delivered' || o.status === 'refused',

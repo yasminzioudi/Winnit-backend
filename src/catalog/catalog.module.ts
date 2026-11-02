@@ -13,6 +13,6 @@ import { PRODUCT_CATALOG_PORT } from './ports/product-catalog.port';
       useClass: MockProductCatalogAdapter,
     },
   ],
-  exports: [CatalogService],
+  exports: [CatalogService, PRODUCT_CATALOG_PORT],
 })
 export class CatalogModule {}

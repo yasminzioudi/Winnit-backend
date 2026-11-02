@@ -156,7 +156,123 @@ export const FIRST_NAMES = [
   'Walid', 'Hela', 'Anis', 'Cyrine', 'Aziz', 'Syrine',
 ];
 
-export function generateSeedDataset(referenceDate = new Date()) {
+export interface SeedOrder extends OrderFinance {
+  _id: string;
+  workspaceId: string;
+  orderNumber: string;
+  productId: string;
+  productNameSnapshot: string;
+  quantity: number;
+  unitPriceMillimes: number;
+  unitCogsMillimes: number;
+  shippingMillimes: number;
+  returnShippingMillimes: number;
+  courierFeeMillimes: number;
+  adCpaMillimes: number;
+  courier: 'yalidine' | 'aramex';
+  customer: {
+    firstName: string;
+    city: string;
+    governorate: string;
+  };
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'refused' | 'cancelled';
+  statusHistory: Array<{
+    status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'refused' | 'cancelled';
+    changedAt: Date;
+    changedBy: string;
+  }>;
+  placedAt: Date;
+  deliveredAt?: Date | null;
+  netContributionMillimes: number;
+  settlementId?: string;
+  version: number;
+  deletedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SeedSettlement {
+  _id: string;
+  workspaceId: string;
+  courier: 'yalidine' | 'aramex';
+  settlementDate: Date;
+  totalAmountMillimes: number;
+  orderIds: string[];
+  status: 'pending' | 'settled';
+  reconciledAt?: Date;
+  version: number;
+}
+
+export interface SeedAdSpend {
+  _id: string;
+  workspaceId: string;
+  platform: string;
+  campaignName: string;
+  periodStart: Date;
+  periodEnd: Date;
+  spendMillimes: number;
+  currency: string;
+  productId: string;
+  notes: string;
+  version: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SeedExpense {
+  _id: string;
+  workspaceId: string;
+  category: 'rent' | 'salary' | 'utilities' | 'logistics' | 'marketing' | 'other';
+  description: string;
+  amountMillimes: number;
+  periodType: 'monthly' | 'one-time';
+  startDate: Date;
+  endDate?: Date;
+  version: number;
+}
+
+export interface SeedScenario {
+  _id: string;
+  workspaceId: string;
+  name: string;
+  productId: string;
+  unitPriceMillimes: number;
+  unitCogsMillimes: number;
+  shippingMillimes: number;
+  adCpaMillimes: number;
+  targetMarginPercent: number;
+  notes: string;
+  version: number;
+}
+
+export interface SeedReport {
+  _id: string;
+  workspaceId: string;
+  title: string;
+  type: string;
+  format: string;
+  status: string;
+  periodStart: Date;
+  periodEnd: Date;
+  createdAt: Date;
+}
+
+export interface SeedCounter {
+  workspaceId: string;
+  name: string;
+  value: number;
+}
+
+export interface SeedDataset {
+  orders: SeedOrder[];
+  settlements: SeedSettlement[];
+  adSpends: SeedAdSpend[];
+  expenses: SeedExpense[];
+  scenarios: SeedScenario[];
+  reports: SeedReport[];
+}
+
+export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
   const rand = createSeededRandom(42);
 
   const randomInt = (min: number, max: number) =>
@@ -169,7 +285,7 @@ export function generateSeedDataset(referenceDate = new Date()) {
 
   // 1. Generate 600 Orders
   const TOTAL_ORDERS = 600;
-  const orders: any[] = [];
+  const orders: SeedOrder[] = [];
 
   for (let i = 1; i <= TOTAL_ORDERS; i++) {
     const product = randomChoice(CATALOG_PRODUCTS);
@@ -177,7 +293,7 @@ export function generateSeedDataset(referenceDate = new Date()) {
     const firstName = randomChoice(FIRST_NAMES);
 
     // Courier distribution: 55% Yalidine, 45% Aramex
-    const courier = rand() < 0.55 ? 'yalidine' : 'aramex';
+    const courier: 'yalidine' | 'aramex' = rand() < 0.55 ? 'yalidine' : 'aramex';
 
     // Order placed timestamp over 90 days
     // Weight slightly towards recent days
@@ -327,7 +443,7 @@ export function generateSeedDataset(referenceDate = new Date()) {
   const aramexBatch1 = aramexDelivered.slice(0, 70);
   const aramexBatch2 = aramexDelivered.slice(70, 110); // pending
 
-  const settlements = [
+  const settlements: SeedSettlement[] = [
     {
       _id: '65fa10000000000000000001',
       workspaceId: WORKSPACE_ID,
@@ -382,7 +498,7 @@ export function generateSeedDataset(referenceDate = new Date()) {
 
   // 3. Ad Spend entries across the 90 days
   // Daily / bi-daily campaign records
-  const adSpends = [];
+  const adSpends: SeedAdSpend[] = [];
   const platforms = ['facebook', 'tiktok', 'google', 'instagram'];
   let currentDay = new Date(ninetyDaysAgo);
   let spendCounter = 1;
@@ -417,7 +533,7 @@ export function generateSeedDataset(referenceDate = new Date()) {
   }
 
   // 4. Six monthly fixed expense types
-  const expenses = [
+  const expenses: SeedExpense[] = [
     {
       _id: '65fc00000000000000000001',
       workspaceId: WORKSPACE_ID,
@@ -481,7 +597,7 @@ export function generateSeedDataset(referenceDate = new Date()) {
   ];
 
   // 5. Four Saved Pricing Scenarios
-  const scenarios = [
+  const scenarios: SeedScenario[] = [
     {
       _id: '65fd00000000000000000001',
       workspaceId: WORKSPACE_ID,
@@ -537,7 +653,7 @@ export function generateSeedDataset(referenceDate = new Date()) {
   ];
 
   // 6. Three Report Records
-  const reports = [
+  const reports: SeedReport[] = [
     {
       _id: '65fe00000000000000000001',
       workspaceId: WORKSPACE_ID,

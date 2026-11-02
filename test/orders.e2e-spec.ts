@@ -16,17 +16,22 @@ describe('Orders API (e2e)', () => {
 
   beforeAll(async () => {
     // Connect to MongoDB
-    mongoClient = new MongoClient(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/winnit_test');
+    mongoClient = new MongoClient(process.env.MONGODB_URI_TEST || 'mongodb://127.0.0.1:27017/winnit_test');
     await mongoClient.connect();
 
     // Create mongoose connection for index creation
     mongooseConnection = mongoose.createConnection(
-      process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/winnit_test',
+      process.env.MONGODB_URI_TEST || 'mongodb://127.0.0.1:27017/winnit_test',
     );
     await mongooseConnection.asPromise();
 
     // Ensure indexes before tests run
     await ensureIndexes(mongooseConnection);
+
+    // Clean test data before tests start
+    const db = mongoClient.db();
+    await db.collection('orders').deleteMany({ workspaceId: { $in: [WORKSPACE_A, WORKSPACE_B] } });
+    await db.collection('counters').deleteMany({ workspaceId: { $in: [WORKSPACE_A, WORKSPACE_B] } });
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
