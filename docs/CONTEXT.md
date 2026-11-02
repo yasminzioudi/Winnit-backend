@@ -253,3 +253,50 @@ npm run db:indexes     # Create all indexes (run on dev and test DBs)
   - `GET /api/v1/insights` -> 200 rule-based insights
   - `POST /api/v1/pricing/optimize` -> 200 with optimal curve and disclaimer
 
+
+
+## Phase 4c: Default Period, Seed Realism, Pricing Test (COMPLETE)
+
+### Default Date Ranges
+- **DateRangeQueryDto**: Added `getLast30DaysInTunisia()` helper computing last 30 days in Africa/Tunis timezone
+- **Getters**: `fromOrDefault` / `toOrDefault` return user-provided values or defaults (last 30 days)
+- **Controllers**: All analytics endpoints (`/analytics/summary`, `/analytics/winners`, `/analytics/cod`, etc.) and `/insights` endpoint now use `query.fromOrDefault` / `query.toOrDefault` instead of requiring `from` / `to` params
+- **Validation**: `from` / `to` marked `@IsOptional()` on DateRangeQueryDto
+- **E2E tests**: Added 4 new tests in `test/analytics.e2e-spec.ts` proving default periods work without params
+
+### Seed Enhancements
+- **Reference date**: Added `SEED_REFERENCE_DATE` env variable (default: new Date()) in `scripts/seed.ts`, printed on seed run
+- **generateSeedDataset**: Now accepts `referenceDate` parameter (default: new Date()), all date calculations anchored to this reference
+- **Ad spend realism**: Adjusted product `spendFactor` values (0.65-0.94 range) to achieve ~23% ad spend ratio (target: 20-30%)
+- **30-day metrics** (verified via seed output):
+  - Gross Revenue: 27137 TND
+  - Ad Spend: 6360 TND (23.4% of gross) ✅
+  - Net Contribution: 11706 TND (43.1% of gross) ✅
+  - Refusal Rate: 23.9% (spec: 18-24%) ✅
+
+### Pricing Test Enhancement
+- **pricing.service.spec.ts**: Fixed refusalRate decimal check from string length to actual value precision
+- **Assertion**: `expect(Math.round(point.refusalRate * 10000) / 10000).toBe(point.refusalRate)` ensures at most 4 decimals
+- **Coverage**: Existing tests already verify `elasticOptimumMillimes == argmax(curve.profitMillimes)`
+
+### Test Results
+- **Lint**: 1 warning (ApiProperty unused in query-analytics.dto.ts) ⚠️ (non-blocking)
+- **Build**: ✅ Success
+- **Unit tests**: 195 passed ✅ (includes new argmax + refusalRate test)
+- **E2E tests**: 91 passed ✅ (includes 4 new default period tests)
+
+### Verification Session (PORT=4010)
+Tested all endpoints with no params (default 30-day period):
+- `GET /api/v1/analytics/summary`: ✅ Returns 30-day waterfall
+- `GET /api/v1/analytics/cod`: ✅ Returns COD metrics (correct keys: summary.pendingCourierPayoutsMillimes, summary.bankWireSettledMillimes, etc.)
+- `GET /api/v1/insights`: ✅ Returns 2 insights
+- `GET /api/v1/analytics/winners`: ✅ Returns 12 products, 6 labeled "Winner", 6 labeled "Données insuffisantes"
+
+### Known Limitations
+- **Insights variety**: Seed currently generates only 2 insights (target: 3-5 varied) ⚠️
+- **Winners spread**: No products labeled "À surveiller" or "À couper" (all non-winners are "Données insuffisantes") ⚠️
+- **Cold-cache benchmark**: p95 = 36.45ms achieved earlier (not re-verified this session)
+
+### Commit
+- **Hash**: 3b504cf
+- **Message**: "phase 4c: default 30-day periods, seed reference date, realistic ad spend (23% of gross), argmax pricing test"
