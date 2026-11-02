@@ -207,7 +207,7 @@ export class AnalyticsService {
     workspaceId: string,
     fromStr: string,
     toStr: string,
-    granularity: 'daily' | 'weekly' = 'daily',
+    granularity: 'daily' | 'weekly' | 'day' | 'week' | 'month' = 'daily',
   ): Promise<TimeseriesResponse> {
     const { from, to } = validateDateRange(fromStr, toStr);
 
@@ -587,11 +587,21 @@ export class AnalyticsService {
     const cached = this.cacheService.get<WinnerRankingItem[]>(cacheKey);
     if (cached) return cached;
 
-    const [productGroups, adSpends, catalogProducts] = await Promise.all([
+    const windowDurationMs = to.getTime() - from.getTime();
+    const prevFrom = new Date(from.getTime() - windowDurationMs);
+    const prevTo = from;
+
+    const [productGroups, prevProductGroups, adSpends, catalogProducts] = await Promise.all([
       this.analyticsRepo.getProductAggregation(workspaceId, from, to),
+      this.analyticsRepo.getProductAggregation(workspaceId, prevFrom, prevTo),
       this.analyticsRepo.findAdSpendsForPeriod(workspaceId, from, to),
       this.catalogPort.findAll(workspaceId),
     ]);
+
+    const prevVolumeMap = new Map<string, number>();
+    for (const pg of prevProductGroups) {
+      prevVolumeMap.set(pg._id, pg.totalOrders);
+    }
 
     const catalogMap = new Map<string, (typeof catalogProducts)[0]>();
     for (const p of catalogProducts) {
@@ -631,7 +641,7 @@ export class AnalyticsService {
 
       const adSpend = adSpendByProduct.get(g._id) ?? 0;
       const actualROAS =
-        adSpend > 0 ? g.grossRevenueMillimes / adSpend : 2.5;
+        adSpend > 0 ? g.grossRevenueMillimes / adSpend : 0;
 
       const netMarginPercent =
         g.grossRevenueMillimes > 0
@@ -639,6 +649,15 @@ export class AnalyticsService {
               (g.netContributionMillimes / g.grossRevenueMillimes) * 1000,
             ) / 10
           : 0;
+
+      const prevVolume = prevVolumeMap.get(g._id) ?? 0;
+      let volumeTrend30Days = 0;
+      if (prevVolume > 0) {
+        volumeTrend30Days = (g.totalOrders - prevVolume) / prevVolume;
+      } else if (g.totalOrders > 0) {
+        volumeTrend30Days = 0.5;
+      }
+      volumeTrend30Days = Math.max(-1, Math.min(1, Math.round(volumeTrend30Days * 100) / 100));
 
       const metrics: ProductMetrics = {
         productId: g._id,
@@ -648,7 +667,7 @@ export class AnalyticsService {
         netMarginPercent,
         breakEvenROAS: ue.breakEvenROAS,
         actualROAS,
-        volumeTrend30Days: 0.1,
+        volumeTrend30Days,
       };
 
       const scoreResult = calculateWinnerScore(metrics);

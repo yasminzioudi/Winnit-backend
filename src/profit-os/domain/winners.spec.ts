@@ -142,21 +142,28 @@ describe('Winners Scoring', () => {
       expect(result.breakdown.deliveryRateScore).toBe(80);
     });
 
-    it('ROAS score = (actual / breakeven) * 100, capped at 100', () => {
-      const metrics: ProductMetrics = {
+    it('ROAS score is proportional to breakeven (1.0x = 50, 2.0x = 100, capped at 100)', () => {
+      const metricsBreakeven: ProductMetrics = {
         productId: 'prd_001',
         totalOrders: 50,
         deliveredOrders: 50,
         refusedOrders: 0,
         netMarginPercent: 30,
         breakEvenROAS: 1.5,
-        actualROAS: 3.0, // 2x breakeven = 200, capped at 100
+        actualROAS: 1.5, // 1x breakeven = 50
         volumeTrend30Days: 0,
       };
 
-      const result = calculateWinnerScore(metrics);
+      const resultBreakeven = calculateWinnerScore(metricsBreakeven);
+      expect(resultBreakeven.breakdown.roasScore).toBe(50);
 
-      expect(result.breakdown.roasScore).toBe(100); // capped
+      const metricsCapped: ProductMetrics = {
+        ...metricsBreakeven,
+        actualROAS: 3.5, // > 2x breakeven, capped at 100
+      };
+
+      const resultCapped = calculateWinnerScore(metricsCapped);
+      expect(resultCapped.breakdown.roasScore).toBe(100);
     });
 
     it('volume trend -1..1 normalizes to 0..100', () => {

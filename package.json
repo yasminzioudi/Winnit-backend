@@ -20,7 +20,8 @@
     "test:debug": "NODE_OPTIONS=\"--experimental-vm-modules\" node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "NODE_OPTIONS=\"--experimental-vm-modules\" jest --config ./test/jest-e2e.json",
     "db:indexes": "ts-node scripts/db-indexes.ts",
-    "seed": "ts-node scripts/seed.ts"
+    "seed": "ts-node scripts/seed.ts",
+    "benchmark:analytics": "ts-node scripts/benchmark-analytics.ts"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

@@ -39,6 +39,15 @@ export class OptimizePriceDto {
   logisticsMillimes: number;
 
   @ApiPropertyOptional({
+    description: 'Optional target ad CPA in integer millimes',
+    example: 22000,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  cpaMillimes?: number;
+
+  @ApiPropertyOptional({
     description: 'Current reference sales volume (units/month)',
     default: 100,
     example: 100,

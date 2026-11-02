@@ -17,10 +17,13 @@ export class DateRangeQueryDto {
 }
 
 export class TimeseriesQueryDto extends DateRangeQueryDto {
-  @ApiPropertyOptional({ enum: ['daily', 'weekly'], default: 'daily' })
+  @ApiPropertyOptional({
+    enum: ['daily', 'weekly', 'day', 'week', 'month'],
+    default: 'daily',
+  })
   @IsOptional()
-  @IsIn(['daily', 'weekly'])
-  granularity?: 'daily' | 'weekly' = 'daily';
+  @IsIn(['daily', 'weekly', 'day', 'week', 'month'])
+  granularity?: 'daily' | 'weekly' | 'day' | 'week' | 'month' = 'daily';
 
   @ApiPropertyOptional({ description: 'Comma-separated metric names' })
   @IsOptional()

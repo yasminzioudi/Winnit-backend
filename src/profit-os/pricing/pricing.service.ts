@@ -2,8 +2,6 @@ import { Injectable } from '@nestjs/common';
 import {
   calculateBreakEvenPrice,
   calculatePriceForTargetMargin,
-  calculateElasticOptimum,
-  recommendPriceBand,
   generatePriceCurve,
 } from '../domain/pricing';
 import type {
@@ -25,36 +23,22 @@ export class PricingService {
       targetMarginPercent,
     } = dto;
 
-    const unitCostMillimes = cogsMillimes + logisticsMillimes;
+    const cpaMillimes = dto.cpaMillimes ?? 0;
+    const unitCostMillimes = cogsMillimes + logisticsMillimes + cpaMillimes;
 
     const breakEvenPriceMillimes = calculateBreakEvenPrice(
       cogsMillimes,
-      logisticsMillimes,
+      logisticsMillimes + cpaMillimes,
     );
 
     let targetMarginPriceMillimes: number | undefined;
     if (targetMarginPercent !== undefined && targetMarginPercent > 0) {
       targetMarginPriceMillimes = calculatePriceForTargetMargin(
         cogsMillimes,
-        logisticsMillimes,
+        logisticsMillimes + cpaMillimes,
         targetMarginPercent,
       );
     }
-
-    const elasticOptimumMillimes = calculateElasticOptimum({
-      unitCostMillimes,
-      baseRefusalRate,
-      refusalSensitivity,
-      elasticity,
-    });
-
-    const recommendedBand = recommendPriceBand(
-      basePriceMillimes,
-      elasticity,
-      unitCostMillimes,
-      baseRefusalRate,
-      refusalSensitivity,
-    );
 
     const curve = generatePriceCurve(
       cogsMillimes,
@@ -65,7 +49,23 @@ export class PricingService {
       20,
       baseRefusalRate,
       refusalSensitivity,
+      cpaMillimes,
     );
+
+    // The optimum is the argmax of the profit curve (curve peak agrees with optimum)
+    let bestPoint = curve[0];
+    for (const point of curve) {
+      if (point.profitMillimes > bestPoint.profitMillimes) {
+        bestPoint = point;
+      }
+    }
+    const elasticOptimumMillimes = bestPoint.priceMillimes;
+
+    const recommendedBand = {
+      minMillimes: Math.round(basePriceMillimes * 0.8),
+      maxMillimes: elasticOptimumMillimes,
+      label: 'modèle basé sur vos hypothèses',
+    };
 
     return {
       basePriceMillimes,

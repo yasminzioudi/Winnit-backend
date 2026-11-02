@@ -41,7 +41,7 @@ export interface TimeseriesBucket {
 }
 
 export interface TimeseriesResponse {
-  granularity: 'daily' | 'weekly';
+  granularity: 'daily' | 'weekly' | 'day' | 'week' | 'month';
   buckets: TimeseriesBucket[];
 }
 

@@ -135,9 +135,14 @@ export class AnalyticsRepository {
     workspaceId: string,
     fromDate: Date,
     toDate: Date,
-    granularity: 'daily' | 'weekly',
+    granularity: 'daily' | 'weekly' | 'monthly' | 'day' | 'week' | 'month' = 'daily',
   ): Promise<RawTimeseriesOrderBucket[]> {
-    const dateFormat = granularity === 'daily' ? '%Y-%m-%d' : '%Y-W%V';
+    const dateFormat =
+      granularity === 'month' || granularity === 'monthly'
+        ? '%Y-%m'
+        : granularity === 'week' || granularity === 'weekly'
+          ? '%Y-W%V'
+          : '%Y-%m-%d';
 
     return this.orderModel.aggregate<RawTimeseriesOrderBucket>([
       {
@@ -183,9 +188,14 @@ export class AnalyticsRepository {
     workspaceId: string,
     fromDate: Date,
     toDate: Date,
-    granularity: 'daily' | 'weekly',
+    granularity: 'daily' | 'weekly' | 'monthly' | 'day' | 'week' | 'month' = 'daily',
   ): Promise<RawTimeseriesAdSpendBucket[]> {
-    const dateFormat = granularity === 'daily' ? '%Y-%m-%d' : '%Y-W%V';
+    const dateFormat =
+      granularity === 'month' || granularity === 'monthly'
+        ? '%Y-%m'
+        : granularity === 'week' || granularity === 'weekly'
+          ? '%Y-W%V'
+          : '%Y-%m-%d';
 
     return this.adSpendModel.aggregate<RawTimeseriesAdSpendBucket>([
       {

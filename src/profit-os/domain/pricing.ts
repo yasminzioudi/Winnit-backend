@@ -66,6 +66,7 @@ export function generatePriceCurve(
   steps: number = 20,
   baseRefusalRate: number = 0.2,
   refusalSensitivity: number = 0.002,
+  cpaMillimes: number = 0,
 ): Array<{ priceMillimes: number; profitMillimes: number; refusalRate: number }> {
   const curve: Array<{ priceMillimes: number; profitMillimes: number; refusalRate: number }> = [];
   const minPrice = Math.round(basePriceMillimes * 0.5);
@@ -75,9 +76,10 @@ export function generatePriceCurve(
   for (let price = minPrice; price <= maxPrice; price += priceStep) {
     // Refusal rate increases with price above base
     const priceDeltaTND = (price - basePriceMillimes) / 1000;
-    const refusalRate = Math.min(1, Math.max(0, baseRefusalRate + refusalSensitivity * priceDeltaTND));
+    const rawRefusalRate = Math.min(1, Math.max(0, baseRefusalRate + refusalSensitivity * priceDeltaTND));
+    const refusalRate = Math.round(rawRefusalRate * 10000) / 10000;
 
-    const unitMargin = price - cogsMillimes - logisticsMillimes;
+    const unitMargin = price - cogsMillimes - logisticsMillimes - cpaMillimes;
     const volumeMultiplier = Math.pow(price / basePriceMillimes, elasticity);
     const estimatedVolume = baseVolume * volumeMultiplier;
     

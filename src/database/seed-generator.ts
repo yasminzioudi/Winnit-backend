@@ -25,7 +25,9 @@ export const CATALOG_PRODUCTS = [
     shipping: 7000,
     returnShipping: 7000,
     cpa: 21400,
-    courier: 'yalidine',
+    courier: 'yalidine' as const,
+    refusalAdj: -0.06,
+    spendFactor: 0.5,
   },
   {
     id: 'prd_002',
@@ -35,7 +37,9 @@ export const CATALOG_PRODUCTS = [
     shipping: 7000,
     returnShipping: 7000,
     cpa: 26000,
-    courier: 'yalidine',
+    courier: 'yalidine' as const,
+    refusalAdj: -0.07,
+    spendFactor: 0.45,
   },
   {
     id: 'prd_003',
@@ -45,7 +49,9 @@ export const CATALOG_PRODUCTS = [
     shipping: 12000,
     returnShipping: 12000,
     cpa: 38000,
-    courier: 'aramex',
+    courier: 'aramex' as const,
+    refusalAdj: 0.09,
+    spendFactor: 6.0,
   },
   {
     id: 'prd_004',
@@ -55,7 +61,9 @@ export const CATALOG_PRODUCTS = [
     shipping: 15000,
     returnShipping: 15000,
     cpa: 45000,
-    courier: 'aramex',
+    courier: 'aramex' as const,
+    refusalAdj: 0.08,
+    spendFactor: 5.5,
   },
   {
     id: 'prd_005',
@@ -65,7 +73,9 @@ export const CATALOG_PRODUCTS = [
     shipping: 8000,
     returnShipping: 8000,
     cpa: 24000,
-    courier: 'yalidine',
+    courier: 'yalidine' as const,
+    refusalAdj: 0.00,
+    spendFactor: 1.5,
   },
   {
     id: 'prd_006',
@@ -75,7 +85,9 @@ export const CATALOG_PRODUCTS = [
     shipping: 6000,
     returnShipping: 6000,
     cpa: 15000,
-    courier: 'yalidine',
+    courier: 'yalidine' as const,
+    refusalAdj: 0.01,
+    spendFactor: 1.8,
   },
   {
     id: 'prd_007',
@@ -85,7 +97,9 @@ export const CATALOG_PRODUCTS = [
     shipping: 9000,
     returnShipping: 9000,
     cpa: 20000,
-    courier: 'aramex',
+    courier: 'aramex' as const,
+    refusalAdj: 0.10,
+    spendFactor: 6.5,
   },
   {
     id: 'prd_008',
@@ -95,7 +109,9 @@ export const CATALOG_PRODUCTS = [
     shipping: 6000,
     returnShipping: 6000,
     cpa: 28000,
-    courier: 'yalidine',
+    courier: 'yalidine' as const,
+    refusalAdj: -0.06,
+    spendFactor: 0.5,
   },
   {
     id: 'prd_009',
@@ -105,7 +121,9 @@ export const CATALOG_PRODUCTS = [
     shipping: 10000,
     returnShipping: 10000,
     cpa: 42000,
-    courier: 'aramex',
+    courier: 'aramex' as const,
+    refusalAdj: 0.00,
+    spendFactor: 1.4,
   },
   {
     id: 'prd_010',
@@ -115,7 +133,9 @@ export const CATALOG_PRODUCTS = [
     shipping: 8000,
     returnShipping: 8000,
     cpa: 26000,
-    courier: 'yalidine',
+    courier: 'yalidine' as const,
+    refusalAdj: -0.05,
+    spendFactor: 0.5,
   },
   {
     id: 'prd_011',
@@ -125,7 +145,9 @@ export const CATALOG_PRODUCTS = [
     shipping: 14000,
     returnShipping: 14000,
     cpa: 32000,
-    courier: 'aramex',
+    courier: 'aramex' as const,
+    refusalAdj: 0.09,
+    spendFactor: 6.0,
   },
   {
     id: 'prd_012',
@@ -135,7 +157,9 @@ export const CATALOG_PRODUCTS = [
     shipping: 10000,
     returnShipping: 10000,
     cpa: 22000,
-    courier: 'yalidine',
+    courier: 'yalidine' as const,
+    refusalAdj: 0.01,
+    spendFactor: 1.6,
   },
 ];
 
@@ -288,7 +312,6 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
   const orders: SeedOrder[] = [];
 
   for (let i = 1; i <= TOTAL_ORDERS; i++) {
-    const product = randomChoice(CATALOG_PRODUCTS);
     const gov = randomChoice(GOVERNORATES);
     const firstName = randomChoice(FIRST_NAMES);
 
@@ -303,11 +326,14 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
         timeProgress * (now.getTime() - ninetyDaysAgo.getTime()),
     );
 
+    // Uniform product distribution ensures every product has ~50 orders across 90d (>= 20 in 30d window)
+    const product = CATALOG_PRODUCTS[(i - 1) % CATALOG_PRODUCTS.length];
+
     const daysSincePlaced = (now.getTime() - placedAt.getTime()) / (24 * 60 * 60 * 1000);
 
-    // Refusal probability: base 0.205 (20.5%) + courier modifier (+0.015 Aramex, -0.015 Yalidine) + gov modifier
-    const courierRefusalMod = courier === 'aramex' ? 0.015 : -0.015;
-    const refusalProb = 0.205 + courierRefusalMod + gov.refusalAdj;
+    // Refusal probability: base 0.205 (20.5%) + courier modifier (+0.095 Aramex, -0.06 Yalidine) + gov modifier + product modifier
+    const courierRefusalMod = courier === 'aramex' ? 0.095 : -0.06;
+    const refusalProb = 0.205 + courierRefusalMod + gov.refusalAdj + (product.refusalAdj ?? 0);
 
     let status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'refused' | 'cancelled';
 
@@ -428,8 +454,7 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
     orders.push(order);
   }
 
-  // 2. Courier Settlements (Some settled, some pending)
-  // Group delivered orders older than 15 days by courier into settled batches
+  // 2. Courier Settlements (Settle most >30d orders, realistic pending share, some >14d)
   const yalidineDelivered = orders.filter(
     (o) => o.status === 'delivered' && o.courier === 'yalidine',
   );
@@ -437,52 +462,83 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
     (o) => o.status === 'delivered' && o.courier === 'aramex',
   );
 
-  // Split into batches
-  const yalidineBatch1 = yalidineDelivered.slice(0, 100);
-  const yalidineBatch2 = yalidineDelivered.slice(100, 160); // pending
-  const aramexBatch1 = aramexDelivered.slice(0, 70);
-  const aramexBatch2 = aramexDelivered.slice(70, 110); // pending
+  yalidineDelivered.sort((a, b) => a.placedAt.getTime() - b.placedAt.getTime());
+  aramexDelivered.sort((a, b) => a.placedAt.getTime() - b.placedAt.getTime());
+
+  // Yalidine: ~240 delivered total. ~170 older than 30d. Settle ~150 of them in 2 batches.
+  const yalidineBatch1 = yalidineDelivered.slice(0, 90); // settled older
+  const yalidineBatch2 = yalidineDelivered.slice(90, 150); // settled mid-older
+  const yalidineBatch3 = yalidineDelivered.slice(150, 195); // pending (includes 15-30d aging)
+  const _yalidineBatch4 = yalidineDelivered.slice(195); // pending (recent)
+
+  // Aramex: ~200 delivered total. ~140 older than 30d. Settle ~120 of them in 2 batches.
+  const aramexBatch1 = aramexDelivered.slice(0, 70); // settled older
+  const aramexBatch2 = aramexDelivered.slice(70, 120); // settled mid-older
+  const aramexBatch3 = aramexDelivered.slice(120, 155); // pending (includes 15-30d aging)
+  const _aramexBatch4 = aramexDelivered.slice(155); // pending (recent)
 
   const settlements: SeedSettlement[] = [
     {
       _id: '65fa10000000000000000001',
       workspaceId: WORKSPACE_ID,
       courier: 'yalidine' as const,
-      settlementDate: new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000),
+      settlementDate: new Date(now.getTime() - 55 * 24 * 60 * 60 * 1000),
       totalAmountMillimes: yalidineBatch1.reduce((sum, o) => sum + o.unitPriceMillimes, 0),
       orderIds: yalidineBatch1.map((o) => o._id),
       status: 'settled' as const,
-      reconciledAt: new Date(now.getTime() - 44 * 24 * 60 * 60 * 1000),
+      reconciledAt: new Date(now.getTime() - 54 * 24 * 60 * 60 * 1000),
       version: 2,
     },
     {
       _id: '65fa10000000000000000002',
       workspaceId: WORKSPACE_ID,
-      courier: 'aramex' as const,
-      settlementDate: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
-      totalAmountMillimes: aramexBatch1.reduce((sum, o) => sum + o.unitPriceMillimes, 0),
-      orderIds: aramexBatch1.map((o) => o._id),
+      courier: 'yalidine' as const,
+      settlementDate: new Date(now.getTime() - 32 * 24 * 60 * 60 * 1000),
+      totalAmountMillimes: yalidineBatch2.reduce((sum, o) => sum + o.unitPriceMillimes, 0),
+      orderIds: yalidineBatch2.map((o) => o._id),
       status: 'settled' as const,
-      reconciledAt: new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000),
+      reconciledAt: new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000),
       version: 2,
     },
     {
       _id: '65fa10000000000000000003',
       workspaceId: WORKSPACE_ID,
-      courier: 'yalidine' as const,
-      settlementDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
-      totalAmountMillimes: yalidineBatch2.reduce((sum, o) => sum + o.unitPriceMillimes, 0),
-      orderIds: yalidineBatch2.map((o) => o._id),
-      status: 'pending' as const,
-      version: 1,
+      courier: 'aramex' as const,
+      settlementDate: new Date(now.getTime() - 48 * 24 * 60 * 60 * 1000),
+      totalAmountMillimes: aramexBatch1.reduce((sum, o) => sum + o.unitPriceMillimes, 0),
+      orderIds: aramexBatch1.map((o) => o._id),
+      status: 'settled' as const,
+      reconciledAt: new Date(now.getTime() - 47 * 24 * 60 * 60 * 1000),
+      version: 2,
     },
     {
       _id: '65fa10000000000000000004',
       workspaceId: WORKSPACE_ID,
       courier: 'aramex' as const,
-      settlementDate: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
+      settlementDate: new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000),
       totalAmountMillimes: aramexBatch2.reduce((sum, o) => sum + o.unitPriceMillimes, 0),
       orderIds: aramexBatch2.map((o) => o._id),
+      status: 'settled' as const,
+      reconciledAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+      version: 2,
+    },
+    {
+      _id: '65fa10000000000000000005',
+      workspaceId: WORKSPACE_ID,
+      courier: 'yalidine' as const,
+      settlementDate: new Date(now.getTime() - 16 * 24 * 60 * 60 * 1000),
+      totalAmountMillimes: yalidineBatch3.reduce((sum, o) => sum + o.unitPriceMillimes, 0),
+      orderIds: yalidineBatch3.map((o) => o._id),
+      status: 'pending' as const,
+      version: 1,
+    },
+    {
+      _id: '65fa10000000000000000006',
+      workspaceId: WORKSPACE_ID,
+      courier: 'aramex' as const,
+      settlementDate: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000),
+      totalAmountMillimes: aramexBatch3.reduce((sum, o) => sum + o.unitPriceMillimes, 0),
+      orderIds: aramexBatch3.map((o) => o._id),
       status: 'pending' as const,
       version: 1,
     },
@@ -492,8 +548,14 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
   for (const o of yalidineBatch1) {
     o.settlementId = '65fa10000000000000000001';
   }
-  for (const o of aramexBatch1) {
+  for (const o of yalidineBatch2) {
     o.settlementId = '65fa10000000000000000002';
+  }
+  for (const o of aramexBatch1) {
+    o.settlementId = '65fa10000000000000000003';
+  }
+  for (const o of aramexBatch2) {
+    o.settlementId = '65fa10000000000000000004';
   }
 
   // 3. Ad Spend entries across the 90 days
@@ -510,7 +572,8 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
     for (let j = 0; j < entriesCount; j++) {
       const platform = platforms[j % platforms.length];
       const prod = CATALOG_PRODUCTS[spendCounter % CATALOG_PRODUCTS.length];
-      const spendMillimes = randomInt(40000, 110000); // 40 to 110 TND/day per campaign
+      const baseSpend = randomInt(70000, 150000); // 70 to 150 TND/day base
+      const spendMillimes = Math.round(baseSpend * (prod.spendFactor ?? 1.0));
 
       adSpends.push({
         _id: `65fb${spendCounter.toString(16).padStart(20, '0')}`,

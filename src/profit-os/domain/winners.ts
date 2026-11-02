@@ -80,10 +80,10 @@ export function calculateWinnerScore(
     metrics.deliveredOrders / (metrics.deliveredOrders + metrics.refusedOrders);
   const deliveryRateScore = deliveryRate * 100;
 
-  // ROAS score: actualROAS / breakEvenROAS, capped at 100
+  // ROAS score: proportional to break-even (1.0x = 50, 2.0x = 100), no instant saturation
   const roasRatio =
     metrics.breakEvenROAS > 0 ? metrics.actualROAS / metrics.breakEvenROAS : 0;
-  const roasScore = Math.min(100, roasRatio * 100);
+  const roasScore = Math.min(100, Math.max(0, roasRatio * 50));
 
   // Volume trend score: normalize -1..1 to 0..100
   const volumeTrendScore = ((metrics.volumeTrend30Days + 1) / 2) * 100;

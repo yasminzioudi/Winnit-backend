@@ -27,6 +27,37 @@ describe('PricingService', () => {
     expect(res.recommendedBand.label).toBe('modèle basé sur vos hypothèses');
     expect(res.disclaimer).toBe('modèle basé sur vos hypothèses');
     expect(res.curve.length).toBeGreaterThan(10);
+
+    // Verify optimum == argmax(curve)
+    const curveMax = res.curve.reduce((best, pt) =>
+      pt.profitMillimes > best.profitMillimes ? pt : best,
+    res.curve[0]);
+    expect(res.elasticOptimumMillimes).toBe(curveMax.priceMillimes);
+
+    // Verify refusalRate is rounded to at most 4 decimals
+    for (const point of res.curve) {
+      const decimals = point.refusalRate.toString().split('.')[1]?.length ?? 0;
+      expect(decimals).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it('optimum matches argmax(curve) when CPA is provided', () => {
+    const res = service.optimize({
+      basePriceMillimes: 129000,
+      cogsMillimes: 28000,
+      logisticsMillimes: 14000,
+      cpaMillimes: 20000,
+      baseVolume: 100,
+      elasticity: -1.8,
+      baseRefusalRate: 0.22,
+      refusalSensitivity: 0.003,
+    });
+
+    const curveMax = res.curve.reduce((best, pt) =>
+      pt.profitMillimes > best.profitMillimes ? pt : best,
+    res.curve[0]);
+    expect(res.elasticOptimumMillimes).toBe(curveMax.priceMillimes);
+    expect(res.unitCostMillimes).toBe(62000); // 28000 + 14000 + 20000
   });
 });
 

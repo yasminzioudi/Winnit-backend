@@ -41,7 +41,7 @@ export class InsightsService {
     const productMetrics: ProductSnapshotMetric[] = products.map((p) => ({
       productId: p.productId,
       productName: p.productName,
-      actualROAS: p.roas || 1.8,
+      actualROAS: typeof p.roas === 'number' ? p.roas : 1.8,
       breakEvenROAS: 1.5,
     }));
 
