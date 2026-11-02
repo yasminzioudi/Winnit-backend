@@ -354,3 +354,38 @@ Tested all endpoints with no params (default 30-day period):
 ### Commits:
 - 2eda903: "phase 4c-c: seed rebalance (ad spend 32%, net 27%, positive profit), lint clean, port hygiene"
 - [next]: "phase 4c-c: seed refusal rate fix (24.0%), all tests pass"
+
+
+## Phase 4c-d: Seed by Exact Quotas (Labels, Refusal, Ad Spend) (COMPLETE)
+
+### Implementation
+- Rewrote `src/database/seed-generator.ts` with explicit `PRODUCT_QUOTAS` table replacing random weighted selection.
+- Deterministic order generation: 12 products × 3 time windows (0-30d, 30-60d, 60-90d) = 600 orders.
+- Deterministic refusal assignment: First N orders refused per product where N = round(count × refusalRate).
+- Per-product CPAs (20-54k) tuned to achieve 25-30% ad spend ratio.
+- Fixed expenses pro-rated by day using Math.round per touched calendar month (committed in b432535).
+- Updated `src/profit-os/orders/seed-identity-600.spec.ts` refusal bound from 24.1% to 24.0% (target: 22-23.5%).
+
+### New Test Suite
+- `src/database/seed-quotas.spec.ts`: 7 comprehensive tests verifying:
+  - Winner label quotas: ≥2 Winner, ≥2 À surveiller, ≥2 À couper, ≥2 Données insuffisantes ✅
+  - 3-5 insights with ≤2 per rule type ✅
+  - Ad spend: 25-30% of 30-day gross revenue ✅
+  - Net realized: 15-35% of gross ✅
+  - Fixed expenses: 8-15% of gross ✅
+  - Positive result after fixed expenses ✅
+  - 90-day refusal rate: 22-23.5% (hard limit ≤24.0%) ✅
+
+### Measured Results (referenceDate: 2026-11-02T12:00:00Z)
+- Total orders: 600 (288 last 30d, 273 prev 30d, 39 old 60-90d)
+- 90-day refusal rate: 22.83% (137/600) ✅
+- Ad spend: 25.61% of 30-day gross ✅
+- Net realized: 33.59% of gross ✅
+- Fixed expenses: 8.38% of gross (pro-rated by day) ✅
+- Result after expenses: 9,497.78 TND ✅
+- All 600 orders resolved (status: delivered or refused for orders >3 days old)
+
+### Test Status
+- 26 test suites, 210 unit tests pass
+- 7 e2e test suites, 91 e2e tests pass
+- 0 lint errors, 0 TypeScript errors
