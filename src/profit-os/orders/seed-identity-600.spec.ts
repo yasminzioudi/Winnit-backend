@@ -28,7 +28,7 @@ describe('600-Order Seed Identity & Finance Verification', () => {
     const refusalRate = (refusedCount / resolvedOrders.length) * 100;
 
     expect(refusalRate).toBeGreaterThanOrEqual(18.0);
-    expect(refusalRate).toBeLessThanOrEqual(24.1);
+    expect(refusalRate).toBeLessThanOrEqual(24.0);
   });
 
   it('contains both Aramex and Yalidine couriers across all 8 governorates', () => {
