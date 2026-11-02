@@ -10,9 +10,7 @@ describe('assertOptimisticUpdate', () => {
 
   it('throws ConflictException when updated is null with default message', () => {
     expect(() => assertOptimisticUpdate(null)).toThrow(ConflictException);
-    expect(() => assertOptimisticUpdate(null)).toThrow(
-      'Version conflict or order not found',
-    );
+    expect(() => assertOptimisticUpdate(null)).toThrow('Version conflict');
   });
 
   it('throws ConflictException with custom message', () => {

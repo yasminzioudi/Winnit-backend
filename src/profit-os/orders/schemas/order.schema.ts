@@ -89,6 +89,9 @@ export class Order extends Document {
 
   @Prop({ sparse: true })
   idempotencyKey?: string;
+
+  @Prop({ sparse: true })
+  bodyHash?: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

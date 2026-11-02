@@ -21,7 +21,7 @@ import {
 } from '../domain/order-state-machine';
 import { CatalogService } from '../../catalog/catalog.service';
 import { CacheService } from '../../common/cache/cache.service';
-import { withIdempotency } from '../../common/utils/idempotency.utils';
+import { withIdempotency, hashPayload } from '../../common/utils/idempotency.utils';
 import { assertOptimisticUpdate } from '../../common/utils/optimistic-lock.utils';
 import { buildCursorMeta } from '../../common/utils/pagination.utils';
 
@@ -65,6 +65,8 @@ export class OrdersService {
         };
         const netContributionMillimes = calculateOrderNetContribution(orderFinance);
 
+        const bodyHash = idempotencyKey ? hashPayload(dto) : undefined;
+
         const order = await this.repository.create({
           workspaceId,
           orderNumber,
@@ -91,11 +93,13 @@ export class OrdersService {
           netContributionMillimes,
           version: 1,
           idempotencyKey,
+          bodyHash,
         });
 
         this.cacheService.invalidateWorkspace(workspaceId);
         return order;
       },
+      { requestPayload: dto },
     );
   }
 

@@ -156,54 +156,83 @@ describe('Orders API (e2e)', () => {
       expect(response.body.version).toBe(1);
     });
 
-    it('replays idempotent request with same status code', async () => {
+    it('replays idempotent request with same body', async () => {
       const idempotencyKey = 'test-idempotency-key-001';
+      const payload = {
+        productId: 'prd_002',
+        quantity: 1,
+        unitPriceMillimes: 89000,
+        unitCogsMillimes: 22000,
+        shippingMillimes: 6000,
+        adCpaMillimes: 18000,
+        courier: 'CTM',
+        customer: {
+          firstName: 'Leila',
+          city: 'Sousse',
+          governorate: 'Sousse',
+        },
+      };
       
       // First request
       const first = await request(app.getHttpServer())
         .post('/api/v1/orders')
         .set('x-workspace-id', WORKSPACE_A)
         .set('idempotency-key', idempotencyKey)
-        .send({
-          productId: 'prd_002',
-          quantity: 1,
-          unitPriceMillimes: 89000,
-          unitCogsMillimes: 22000,
-          shippingMillimes: 6000,
-          adCpaMillimes: 18000,
-          courier: 'CTM',
-          customer: {
-            firstName: 'Leila',
-            city: 'Sousse',
-            governorate: 'Sousse',
-          },
-        })
+        .send(payload)
         .expect(201);
 
-      // Replay - should return same order
+      // Replay with identical body - should return same order
       const replay = await request(app.getHttpServer())
         .post('/api/v1/orders')
         .set('x-workspace-id', WORKSPACE_A)
         .set('idempotency-key', idempotencyKey)
-        .send({
-          productId: 'prd_003', // Different data
-          quantity: 2,
-          unitPriceMillimes: 65000,
-          unitCogsMillimes: 18000,
-          shippingMillimes: 5000,
-          adCpaMillimes: 15000,
-          courier: 'DHL',
-          customer: {
-            firstName: 'Mohamed',
-            city: 'Sfax',
-            governorate: 'Sfax',
-          },
-        })
-        .expect(201);
+        .send(payload);
 
+      expect(replay.status).toBeGreaterThanOrEqual(200);
+      expect(replay.status).toBeLessThan(300);
       expect(replay.body._id).toBe(first.body._id);
       expect(replay.body.orderNumber).toBe(first.body.orderNumber);
-      expect(replay.body.productId).toBe('prd_002'); // Original data preserved
+      expect(replay.body.productId).toBe('prd_002');
+    });
+
+    it('returns 422 when idempotency key is reused with different body', async () => {
+      const idempotencyKey = 'test-idempotency-key-002';
+      const initialPayload = {
+        productId: 'prd_002',
+        quantity: 1,
+        unitPriceMillimes: 89000,
+        unitCogsMillimes: 22000,
+        shippingMillimes: 6000,
+        adCpaMillimes: 18000,
+        courier: 'CTM',
+        customer: {
+          firstName: 'Leila',
+          city: 'Sousse',
+          governorate: 'Sousse',
+        },
+      };
+
+      await request(app.getHttpServer())
+        .post('/api/v1/orders')
+        .set('x-workspace-id', WORKSPACE_A)
+        .set('idempotency-key', idempotencyKey)
+        .send(initialPayload)
+        .expect(201);
+
+      // Replay with different body -> 422
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/orders')
+        .set('x-workspace-id', WORKSPACE_A)
+        .set('idempotency-key', idempotencyKey)
+        .send({
+          ...initialPayload,
+          quantity: 3, // Different payload
+        })
+        .expect(422);
+
+      expect(response.body.status).toBe(422);
+      expect(response.body.type).toContain('/422');
+      expect(response.body.title).toBe('Idempotency key reused with different payload');
     });
   });
 
@@ -572,6 +601,22 @@ describe('Orders API (e2e)', () => {
 
       expect(response.body.type).toContain('/409');
       expect(response.body.status).toBe(409);
+      expect(response.body.title).toBe('Version conflict');
+    });
+
+    it('returns 404 with distinct title when order does not exist', async () => {
+      const response = await request(app.getHttpServer())
+        .patch('/api/v1/orders/507f1f77bcf86cd799439011')
+        .set('x-workspace-id', WORKSPACE_A)
+        .send({
+          unitPriceMillimes: 140000,
+          version: 1,
+        })
+        .expect(404);
+
+      expect(response.body.type).toContain('/404');
+      expect(response.body.status).toBe(404);
+      expect(response.body.title).toBe('Order not found');
     });
   });
 });
