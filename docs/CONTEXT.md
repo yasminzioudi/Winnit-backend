@@ -300,3 +300,57 @@ Tested all endpoints with no params (default 30-day period):
 ### Commit
 - **Hash**: 3b504cf
 - **Message**: "phase 4c: default 30-day periods, seed reference date, realistic ad spend (23% of gross), argmax pricing test"
+
+
+## Phase 4c-c: Seed Rebalance, Lint Clean, Port Hygiene (INCOMPLETE)
+
+### What was completed:
+
+**1. Seed rebalance** (partial):
+- **Ad spend**: 32.7% of gross (7479/22877) ⚠️ slightly over 30% target
+- **Net/gross**: 26.2% (5995/22877) ✅ within 15-35%
+- **Fixed expenses**: 13.8% of gross (3150/22877) ✅ within 8-15%
+- **Result after fixed**: +2845 TND ✅ POSITIVE
+- **Refusal rate**: 24.0% ✅ within 18-24%
+- **Product volumes**: varied (6-36 orders per product in 30-day window)
+
+**2. Missing unit test**: ✅ Already exists in pricing.service.spec.ts (lines 30-36, 53-57)
+- elasticOptimumMillimes === argmax(curve profit)
+- refusalRate has at most 4 decimals
+
+**3. Lint**: ✅ 0 warnings (removed unused ApiProperty import)
+
+**4. Process hygiene**: ✅ PORT 4010 clean before/after, no interference with 4000
+
+**5. Curl session** (PORT 4010):
+- GET /insights: 4 insights (1 refusal-rate, 2 ROAS, 1 pending-payouts) ✅
+- GET /winners: 5 "Winner", 0 "À surveiller", 0 "À couper", 7 "Données insuffisantes" ❌
+- GET /summary: waterfall + expenses with positive profit ✅
+
+**6. Regression guard**: ❌ NOT ADDED (test assertions not created)
+
+**7. Test checkpoint**:
+- Lint: ✅ 0 warnings
+- Build: ✅ Success
+- tsc: ✅ No errors
+- Unit: ✅ 195 passed
+- E2E: ✅ 91 passed
+
+### What is NOT verified:
+
+❌ **Seed criterion 1d**: Winners label spread NOT achieved
+- Required: >=2 Winner, >=2 À surveiller, >=2 À couper, >=2 Données insuffisantes
+- Actual: 5 Winner, 0 À surveiller, 0 À couper, 7 Données insuffisantes
+- Root cause: Products with >=20 orders and high refusal/spend still score above 75 due to positive volume trends and acceptable delivery rates. To achieve À couper labels (score <50), products would need simultaneously: very high COGS (low margin), very high refusal (low delivery rate), very high spend (low ROAS), AND negative volume trend. The deterministic PRNG with weighted product selection makes it difficult to generate products with all four poor metrics while maintaining realistic order volumes.
+
+❌ **Seed criterion 1e**: Insights variety NOT verified
+- Current: 4 insights (1 refusal-rate, 2 ROAS, 1 pending-payouts)
+- Required: 3-5 insights with max 2 per rule type ✅ (met by count and distribution)
+
+❌ **Regression guard**: Test assertions for seed quality NOT added
+- Would require adding assertions to existing e2e or new seed verification test
+- Assertions needed: label spread, insights count/variety, net/gross range, positive profit
+
+### Commits:
+- 2eda903: "phase 4c-c: seed rebalance (ad spend 32%, net 27%, positive profit), lint clean, port hygiene"
+- [next]: "phase 4c-c: seed refusal rate fix (24.0%), all tests pass"
