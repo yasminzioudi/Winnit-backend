@@ -98,7 +98,7 @@ export const CATALOG_PRODUCTS = [
     returnShipping: 9000,
     cpa: 20000,
     courier: 'aramex' as const,
-    refusalAdj: 0.14,
+    refusalAdj: 0.13,
     spendFactor: 1.35,
   },
   {
@@ -146,7 +146,7 @@ export const CATALOG_PRODUCTS = [
     returnShipping: 14000,
     cpa: 32000,
     courier: 'aramex' as const,
-    refusalAdj: 0.15,
+    refusalAdj: 0.14,
     spendFactor: 1.40,
   },
   {
