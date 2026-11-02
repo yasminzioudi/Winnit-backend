@@ -21,145 +21,145 @@ export const CATALOG_PRODUCTS = [
     id: 'prd_001',
     name: "Aura d'Ambre Extrait (50ml)",
     price: 129000,
-    cogs: 28000,
+    cogs: 32000,
     shipping: 7000,
     returnShipping: 7000,
     cpa: 21400,
     courier: 'yalidine' as const,
     refusalAdj: -0.06,
-    spendFactor: 0.70,
+    spendFactor: 0.55,
   },
   {
     id: 'prd_002',
     name: "Aura d'Ambre Duo Bundle",
     price: 229000,
-    cogs: 52000,
+    cogs: 62000,
     shipping: 7000,
     returnShipping: 7000,
     cpa: 26000,
     courier: 'yalidine' as const,
     refusalAdj: -0.07,
-    spendFactor: 0.65,
+    spendFactor: 0.50,
   },
   {
     id: 'prd_003',
     name: 'Lumina Obsidian Articulated Desk Lamp',
     price: 249000,
-    cogs: 65000,
+    cogs: 88000,
     shipping: 12000,
     returnShipping: 12000,
     cpa: 38000,
     courier: 'aramex' as const,
-    refusalAdj: 0.09,
-    spendFactor: 0.88,
+    refusalAdj: 0.11,
+    spendFactor: 1.20,
   },
   {
     id: 'prd_004',
     name: 'Saddle Leather Travel Duffle',
     price: 320000,
-    cogs: 88000,
+    cogs: 120000,
     shipping: 15000,
     returnShipping: 15000,
     cpa: 45000,
     courier: 'aramex' as const,
-    refusalAdj: 0.08,
-    spendFactor: 0.82,
+    refusalAdj: 0.12,
+    spendFactor: 1.30,
   },
   {
     id: 'prd_005',
     name: 'Velvet Rose Night Serum (30ml)',
     price: 149000,
-    cogs: 35000,
+    cogs: 42000,
     shipping: 8000,
     returnShipping: 8000,
     cpa: 24000,
     courier: 'yalidine' as const,
-    refusalAdj: 0.00,
-    spendFactor: 0.76,
+    refusalAdj: 0.02,
+    spendFactor: 0.68,
   },
   {
     id: 'prd_006',
     name: 'Silk Touch Wireless Charging Stand',
     price: 89000,
-    cogs: 22000,
+    cogs: 28000,
     shipping: 6000,
     returnShipping: 6000,
     cpa: 15000,
     courier: 'yalidine' as const,
     refusalAdj: 0.01,
-    spendFactor: 0.79,
+    spendFactor: 0.72,
   },
   {
     id: 'prd_007',
     name: 'Marrakesh Clay Diffuser Set',
     price: 119000,
-    cogs: 28000,
+    cogs: 38000,
     shipping: 9000,
     returnShipping: 9000,
     cpa: 20000,
     courier: 'aramex' as const,
-    refusalAdj: 0.10,
-    spendFactor: 0.94,
+    refusalAdj: 0.14,
+    spendFactor: 1.35,
   },
   {
     id: 'prd_008',
     name: 'Sahara Gold Cuff Bracelet',
     price: 179000,
-    cogs: 42000,
+    cogs: 52000,
     shipping: 6000,
     returnShipping: 6000,
     cpa: 28000,
     courier: 'yalidine' as const,
-    refusalAdj: -0.06,
-    spendFactor: 0.73,
+    refusalAdj: -0.05,
+    spendFactor: 0.60,
   },
   {
     id: 'prd_009',
     name: 'Atlas Merino Wool Throw',
     price: 269000,
-    cogs: 78000,
+    cogs: 95000,
     shipping: 10000,
     returnShipping: 10000,
     cpa: 42000,
     courier: 'aramex' as const,
-    refusalAdj: 0.00,
-    spendFactor: 0.67,
+    refusalAdj: 0.03,
+    spendFactor: 0.58,
   },
   {
     id: 'prd_010',
     name: 'Midnight Oud Cologne (100ml)',
     price: 159000,
-    cogs: 38000,
+    cogs: 46000,
     shipping: 8000,
     returnShipping: 8000,
     cpa: 26000,
     courier: 'yalidine' as const,
-    refusalAdj: -0.05,
-    spendFactor: 0.70,
+    refusalAdj: -0.04,
+    spendFactor: 0.58,
   },
   {
     id: 'prd_011',
     name: 'Tunis Blue Ceramic Vase (Large)',
     price: 199000,
-    cogs: 52000,
+    cogs: 85000,
     shipping: 14000,
     returnShipping: 14000,
     cpa: 32000,
     courier: 'aramex' as const,
-    refusalAdj: 0.09,
-    spendFactor: 0.85,
+    refusalAdj: 0.15,
+    spendFactor: 1.40,
   },
   {
     id: 'prd_012',
     name: 'Jasmine Night Candle Collection (3-pack)',
     price: 139000,
-    cogs: 32000,
+    cogs: 40000,
     shipping: 10000,
     returnShipping: 10000,
     cpa: 22000,
     courier: 'yalidine' as const,
-    refusalAdj: 0.01,
-    spendFactor: 0.73,
+    refusalAdj: 0.02,
+    spendFactor: 0.65,
   },
 ];
 
@@ -311,6 +311,23 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
   const TOTAL_ORDERS = 600;
   const orders: SeedOrder[] = [];
 
+  // Product volume weights to create variety (sum=12)
+  const volumeWeights = [
+    1.3, // prd_001: ~65 orders (high volume)
+    0.5, // prd_002: ~25 orders
+    0.8, // prd_003: ~40 orders (enough for scoring with poor metrics)
+    0.9, // prd_004: ~45 orders (enough for scoring with very poor metrics → À couper)
+    1.3, // prd_005: ~65 orders (high volume)
+    1.4, // prd_006: ~70 orders (high volume)
+    0.75, // prd_007: ~38 orders (enough for scoring with mid metrics → À surveiller)
+    1.2, // prd_008: ~60 orders
+    0.3, // prd_009: ~15 orders (insufficient)
+    1.3, // prd_010: ~65 orders (high volume)
+    0.7, // prd_011: ~35 orders (enough for scoring with very poor metrics → À couper)
+    1.45, // prd_012: ~72 orders (high volume)
+  ];
+  const totalWeight = volumeWeights.reduce((a, b) => a + b, 0);
+
   for (let i = 1; i <= TOTAL_ORDERS; i++) {
     const gov = randomChoice(GOVERNORATES);
     const firstName = randomChoice(FIRST_NAMES);
@@ -326,8 +343,18 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
         timeProgress * (now.getTime() - ninetyDaysAgo.getTime()),
     );
 
-    // Uniform product distribution ensures every product has ~50 orders across 90d (>= 20 in 30d window)
-    const product = CATALOG_PRODUCTS[(i - 1) % CATALOG_PRODUCTS.length];
+    // Weighted product selection
+    const roll = rand() * totalWeight;
+    let cumulative = 0;
+    let productIndex = 0;
+    for (let j = 0; j < volumeWeights.length; j++) {
+      cumulative += volumeWeights[j];
+      if (roll < cumulative) {
+        productIndex = j;
+        break;
+      }
+    }
+    const product = CATALOG_PRODUCTS[productIndex];
 
     const daysSincePlaced = (now.getTime() - placedAt.getTime()) / (24 * 60 * 60 * 1000);
 
@@ -595,14 +622,14 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
     currentDay = nextDay;
   }
 
-  // 4. Six monthly fixed expense types
+  // 4. Six monthly fixed expense types (reduced to 8-12% of typical gross)
   const expenses: SeedExpense[] = [
     {
       _id: '65fc00000000000000000001',
       workspaceId: WORKSPACE_ID,
       category: 'rent' as const,
       description: 'Loyer Bureau & Entrepôt La Marsa',
-      amountMillimes: 1500000, // 1,500 TND / month
+      amountMillimes: 800000, // 800 TND / month
       periodType: 'monthly' as const,
       startDate: new Date('2025-11-01T00:00:00Z'),
       version: 1,
@@ -612,7 +639,7 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
       workspaceId: WORKSPACE_ID,
       category: 'salary' as const,
       description: 'Salaire Direction & Stratégie',
-      amountMillimes: 2500000, // 2,500 TND / month
+      amountMillimes: 1200000, // 1,200 TND / month
       periodType: 'monthly' as const,
       startDate: new Date('2025-11-01T00:00:00Z'),
       version: 1,
@@ -622,7 +649,7 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
       workspaceId: WORKSPACE_ID,
       category: 'salary' as const,
       description: 'Salaire Gestionnaire Commandes & Service Client',
-      amountMillimes: 1200000, // 1,200 TND / month
+      amountMillimes: 600000, // 600 TND / month
       periodType: 'monthly' as const,
       startDate: new Date('2025-11-01T00:00:00Z'),
       version: 1,
@@ -632,7 +659,7 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
       workspaceId: WORKSPACE_ID,
       category: 'utilities' as const,
       description: 'Fibre Optique, Électricité & Eau',
-      amountMillimes: 350000, // 350 TND / month
+      amountMillimes: 200000, // 200 TND / month
       periodType: 'monthly' as const,
       startDate: new Date('2025-11-01T00:00:00Z'),
       version: 1,
@@ -642,7 +669,7 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
       workspaceId: WORKSPACE_ID,
       category: 'logistics' as const,
       description: 'Abonnement Plateforme WMS & Emballages Premium',
-      amountMillimes: 400000, // 400 TND / month
+      amountMillimes: 200000, // 200 TND / month
       periodType: 'monthly' as const,
       startDate: new Date('2025-11-01T00:00:00Z'),
       version: 1,
@@ -652,7 +679,7 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
       workspaceId: WORKSPACE_ID,
       category: 'marketing' as const,
       description: 'Shopify Pro, Canva Pro & Outils Tracking',
-      amountMillimes: 250000, // 250 TND / month
+      amountMillimes: 150000, // 150 TND / month
       periodType: 'monthly' as const,
       startDate: new Date('2025-11-01T00:00:00Z'),
       version: 1,

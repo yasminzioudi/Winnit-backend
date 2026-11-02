@@ -1,5 +1,5 @@
 import { IsISO8601, IsOptional, IsString, IsIn } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 function getLast30DaysInTunisia(): { from: string; to: string } {
   const now = new Date();
