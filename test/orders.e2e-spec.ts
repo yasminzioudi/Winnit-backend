@@ -2,12 +2,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { MongoClient } from 'mongodb';
+import * as mongoose from 'mongoose';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/common/utils/configure-app';
+import { ensureIndexes } from '../src/database/ensure-indexes';
 
 describe('Orders API (e2e)', () => {
   let app: INestApplication;
   let mongoClient: MongoClient;
+  let mongooseConnection: mongoose.Connection;
   const WORKSPACE_A = 'ws_maison_ambre'; // Use workspace that has products
   const WORKSPACE_B = 'ws_test_b';
 
@@ -15,6 +18,15 @@ describe('Orders API (e2e)', () => {
     // Connect to MongoDB
     mongoClient = new MongoClient(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/winnit_test');
     await mongoClient.connect();
+
+    // Create mongoose connection for index creation
+    mongooseConnection = mongoose.createConnection(
+      process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/winnit_test',
+    );
+    await mongooseConnection.asPromise();
+
+    // Ensure indexes before tests run
+    await ensureIndexes(mongooseConnection);
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -31,8 +43,89 @@ describe('Orders API (e2e)', () => {
     await db.collection('orders').deleteMany({ workspaceId: { $in: [WORKSPACE_A, WORKSPACE_B] } });
     await db.collection('counters').deleteMany({ workspaceId: { $in: [WORKSPACE_A, WORKSPACE_B] } });
     
+    await mongooseConnection.close();
     await mongoClient.close();
     await app.close();
+  });
+
+  describe('Concurrent idempotency', () => {
+    it('two concurrent POST with same Idempotency-Key both succeed and return same order', async () => {
+      const idempotencyKey = `concurrent-test-${Date.now()}`;
+      const payload = {
+        productId: 'prd_001',
+        quantity: 1,
+        unitPriceMillimes: 129000,
+        unitCogsMillimes: 28000,
+        shippingMillimes: 7000,
+        adCpaMillimes: 22000,
+        courier: 'aramex',
+        customer: { firstName: 'Concurrent', city: 'Tunis', governorate: 'Tunis' },
+      };
+
+      // Fire two concurrent requests with same idempotency key
+      const [response1, response2] = await Promise.all([
+        request(app.getHttpServer())
+          .post('/api/v1/orders')
+          .set('x-workspace-id', WORKSPACE_A)
+          .set('Idempotency-Key', idempotencyKey)
+          .send(payload),
+        request(app.getHttpServer())
+          .post('/api/v1/orders')
+          .set('x-workspace-id', WORKSPACE_A)
+          .set('Idempotency-Key', idempotencyKey)
+          .send(payload),
+      ]);
+
+      // Both should succeed
+      expect(response1.status).toBeGreaterThanOrEqual(200);
+      expect(response1.status).toBeLessThan(300);
+      expect(response2.status).toBeGreaterThanOrEqual(200);
+      expect(response2.status).toBeLessThan(300);
+
+      // Both should return the same order number and ID
+      expect(response1.body.orderNumber).toBe(response2.body.orderNumber);
+      expect(response1.body._id).toBe(response2.body._id);
+    });
+  });
+
+  describe('Query validation', () => {
+    it('rejects query keys starting with "$"', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/orders?$where=1')
+        .set('x-workspace-id', WORKSPACE_A)
+        .expect(400);
+
+      expect(response.body.status).toBe(400);
+      expect(response.body.type).toContain('400');
+    });
+
+    it('rejects nested query keys containing "$"', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/orders?status[$ne]=x')
+        .set('x-workspace-id', WORKSPACE_A)
+        .expect(400);
+
+      expect(response.body.status).toBe(400);
+      expect(response.body.type).toContain('400');
+    });
+
+    it('rejects limit > 100', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/orders')
+        .query({ limit: 101 })
+        .set('x-workspace-id', WORKSPACE_A)
+        .expect(400);
+
+      expect(response.body.status).toBe(400);
+    });
+
+    it('accepts limit = 100', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/orders')
+        .query({ limit: 100 })
+        .set('x-workspace-id', WORKSPACE_A)
+        .expect(200);
+    });
   });
 
   describe('POST /api/v1/orders', () => {

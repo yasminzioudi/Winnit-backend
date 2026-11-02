@@ -64,8 +64,8 @@ Pure calculation functions with ZERO Nest/Mongoose imports. Services MUST call t
 ```bash
 npm run build          # Compile TypeScript
 npm run lint           # oxlint src/ test/
-npm test               # Jest unit tests (88 tests pass)
-npm run test:e2e       # Supertest e2e tests (23 tests pass, winnit_test DB)
+npm test               # Jest unit tests (113 tests pass)
+npm run test:e2e       # Supertest e2e tests (28 tests pass, winnit_test DB)
 npx tsc --noEmit       # Type check
 npm run seed           # Seed ws_maison_ambre with 40 orders (idempotent)
 npm run db:indexes     # Create all indexes (run on dev and test DBs)
@@ -77,6 +77,22 @@ npm run db:indexes     # Create all indexes (run on dev and test DBs)
 - ✅ Phase 1: Backend foundation (config, mongo, tenancy, health, catalog, common layer, Swagger, e2e skeleton, drift guard)
 - ✅ Phase 2: 6 domain modules with 64 passing tests, golden fixture contracts, frontend reconciliation
 - ✅ Phase 3a: Orders CRUD module proven (schema, repo, service, controller, unit tests, e2e tests, seed, indexes)
+- ✅ Phase 3b-1: Orders hardening & common helpers (returnDocument 'after', ensureIndexes with code-86 conflict retry, NoDollarQueryGuard, withIdempotency, assertOptimisticUpdate, notDeletedFilter, paginatePage/buildCursorMeta, 113 unit tests, 28 e2e tests, PORT=4010 curl proven)
+
+## Phase 3b-1: Orders Hardening & Common Helpers (COMPLETE)
+
+### Features & Shared Helpers
+- `src/common/guards/no-dollar-query.guard.ts`: Global guard recursively rejecting query keys starting with `$` or containing `.` at any nesting depth with 400 Problem+JSON.
+- `src/common/utils/idempotency.utils.ts`: `withIdempotency` helper handling replay and concurrent E11000 races.
+- `src/common/utils/optimistic-lock.utils.ts`: `assertOptimisticUpdate` helper throwing 409 ConflictException on stale version / not found.
+- `src/common/utils/soft-delete.utils.ts`: `notDeletedFilter` and `softDeleteUpdate` helpers standardizing `{ deletedAt: null }`.
+- `src/common/utils/pagination.utils.ts`: `paginatePage` envelope generator and `buildCursorMeta` cursor generator.
+- `src/database/ensure-indexes.ts`: Non-destructive index sync that only drops conflicting index specs (error code 86).
+- `scripts/db-indexes.ts`: Refactored to share `ensureIndexes` with e2e setup.
+- `orders.repository.ts`: Deprecated `new: true` replaced with `returnDocument: 'after'`. Uses `notDeletedFilter`.
+- `orders.service.ts`: Refactored to consume `withIdempotency`, `assertOptimisticUpdate`, `buildCursorMeta`.
+- `src/profit-os/orders/seed-identity.spec.ts`: Unit test proving waterfall and ledger finance identities.
+- E2E tests: Added concurrent idempotency POST test, `$where` / nested `status[$ne]` 400 rejection tests, limit validation tests.
 
 ## Phase 3a: Orders Module (COMPLETE)
 

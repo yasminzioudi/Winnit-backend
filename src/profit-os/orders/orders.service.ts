@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ConflictException,
   UnprocessableEntityException,
   BadRequestException,
 } from '@nestjs/common';
@@ -22,6 +21,9 @@ import {
 } from '../domain/order-state-machine';
 import { CatalogService } from '../../catalog/catalog.service';
 import { CacheService } from '../../common/cache/cache.service';
+import { withIdempotency } from '../../common/utils/idempotency.utils';
+import { assertOptimisticUpdate } from '../../common/utils/optimistic-lock.utils';
+import { buildCursorMeta } from '../../common/utils/pagination.utils';
 
 @Injectable()
 export class OrdersService {
@@ -36,77 +38,65 @@ export class OrdersService {
     dto: CreateOrderDto,
     idempotencyKey?: string,
   ): Promise<Order> {
-    // Check idempotency
-    if (idempotencyKey) {
-      const existing = await this.repository.findByIdempotencyKey(workspaceId, idempotencyKey);
-      if (existing) {
-        return existing; // 200/201 replay
-      }
-    }
-
-    // Get product snapshot
-    const product = await this.catalogService.findOne(workspaceId, dto.productId);
-    if (!product) {
-      throw new BadRequestException(`Product ${dto.productId} not found`);
-    }
-
-    // Generate order number
-    const orderNumber = await this.repository.getNextOrderNumber(workspaceId);
-
-    // Calculate net contribution
-    const orderFinance: OrderFinance = {
-      unitPriceMillimes: dto.unitPriceMillimes,
-      unitCogsMillimes: dto.unitCogsMillimes,
-      quantity: dto.quantity,
-      shippingMillimes: dto.shippingMillimes,
-      returnShippingMillimes: dto.returnShippingMillimes || 0,
-      courierFeeMillimes: dto.courierFeeMillimes || 0,
-      adCpaMillimes: dto.adCpaMillimes,
-      status: 'pending',
-    };
-    const netContributionMillimes = calculateOrderNetContribution(orderFinance);
-
-    try {
-      const order = await this.repository.create({
-        workspaceId,
-        orderNumber,
-        productId: dto.productId,
-        productNameSnapshot: product.name,
-        quantity: dto.quantity,
-        unitPriceMillimes: dto.unitPriceMillimes,
-        unitCogsMillimes: dto.unitCogsMillimes,
-        shippingMillimes: dto.shippingMillimes,
-        returnShippingMillimes: dto.returnShippingMillimes || 0,
-        courierFeeMillimes: dto.courierFeeMillimes || 0,
-        adCpaMillimes: dto.adCpaMillimes,
-        courier: dto.courier,
-        customer: dto.customer,
-        status: 'pending',
-        statusHistory: [
-          {
-            status: 'pending',
-            changedAt: new Date(),
-            changedBy: 'system',
-          },
-        ],
-        placedAt: dto.placedAt ? new Date(dto.placedAt) : new Date(),
-        netContributionMillimes,
-        version: 1,
-        idempotencyKey,
-      });
-
-      this.cacheService.invalidateWorkspace(workspaceId);
-      return order;
-    } catch (error: any) {
-      // Handle E11000 duplicate key error for concurrent idempotency key
-      if (error.code === 11000 && idempotencyKey) {
-        const existing = await this.repository.findByIdempotencyKey(workspaceId, idempotencyKey);
-        if (existing) {
-          return existing;
+    return withIdempotency(
+      workspaceId,
+      idempotencyKey,
+      (ws, key) => this.repository.findByIdempotencyKey(ws, key),
+      async () => {
+        // Get product snapshot
+        const product = await this.catalogService.findOne(workspaceId, dto.productId);
+        if (!product) {
+          throw new BadRequestException(`Product ${dto.productId} not found`);
         }
-      }
-      throw error;
-    }
+
+        // Generate order number
+        const orderNumber = await this.repository.getNextOrderNumber(workspaceId);
+
+        // Calculate net contribution
+        const orderFinance: OrderFinance = {
+          unitPriceMillimes: dto.unitPriceMillimes,
+          unitCogsMillimes: dto.unitCogsMillimes,
+          quantity: dto.quantity,
+          shippingMillimes: dto.shippingMillimes,
+          returnShippingMillimes: dto.returnShippingMillimes || 0,
+          courierFeeMillimes: dto.courierFeeMillimes || 0,
+          adCpaMillimes: dto.adCpaMillimes,
+          status: 'pending',
+        };
+        const netContributionMillimes = calculateOrderNetContribution(orderFinance);
+
+        const order = await this.repository.create({
+          workspaceId,
+          orderNumber,
+          productId: dto.productId,
+          productNameSnapshot: product.name,
+          quantity: dto.quantity,
+          unitPriceMillimes: dto.unitPriceMillimes,
+          unitCogsMillimes: dto.unitCogsMillimes,
+          shippingMillimes: dto.shippingMillimes,
+          returnShippingMillimes: dto.returnShippingMillimes || 0,
+          courierFeeMillimes: dto.courierFeeMillimes || 0,
+          adCpaMillimes: dto.adCpaMillimes,
+          courier: dto.courier,
+          customer: dto.customer,
+          status: 'pending',
+          statusHistory: [
+            {
+              status: 'pending',
+              changedAt: new Date(),
+              changedBy: 'system',
+            },
+          ],
+          placedAt: dto.placedAt ? new Date(dto.placedAt) : new Date(),
+          netContributionMillimes,
+          version: 1,
+          idempotencyKey,
+        });
+
+        this.cacheService.invalidateWorkspace(workspaceId);
+        return order;
+      },
+    );
   }
 
   async findById(workspaceId: string, id: string): Promise<Order> {
@@ -119,18 +109,11 @@ export class OrdersService {
 
   async findMany(workspaceId: string, query: QueryOrdersDto) {
     const orders = await this.repository.findMany(workspaceId, query);
-    const nextCursor = orders.length === (query.limit || 20) && orders.length > 0
-      ? Buffer.from(
-          JSON.stringify({
-            placedAt: orders[orders.length - 1].placedAt,
-            id: orders[orders.length - 1]._id,
-          }),
-        ).toString('base64')
-      : null;
+    const meta = buildCursorMeta(orders, query.limit || 20);
 
     return {
       data: orders,
-      meta: { nextCursor },
+      meta,
     };
   }
 
@@ -162,12 +145,10 @@ export class OrdersService {
       netContributionMillimes,
     });
 
-    if (!updated) {
-      throw new ConflictException('Version conflict or order not found');
-    }
+    assertOptimisticUpdate(updated);
 
     this.cacheService.invalidateWorkspace(workspaceId);
-    return updated;
+    return updated!;
   }
 
   async changeStatus(
@@ -221,12 +202,10 @@ export class OrdersService {
       additionalUpdates,
     );
 
-    if (!updated) {
-      throw new ConflictException('Version conflict or order not found');
-    }
+    assertOptimisticUpdate(updated);
 
     this.cacheService.invalidateWorkspace(workspaceId);
-    return updated;
+    return updated!;
   }
 
   async bulkChangeStatus(
@@ -334,12 +313,10 @@ export class OrdersService {
       { deliveredAt: new Date(), netContributionMillimes },
     );
 
-    if (!updated) {
-      throw new ConflictException('Version conflict or order not found');
-    }
+    assertOptimisticUpdate(updated);
 
     this.cacheService.invalidateWorkspace(workspaceId);
-    return updated;
+    return updated!;
   }
 
   async softDelete(workspaceId: string, id: string): Promise<void> {

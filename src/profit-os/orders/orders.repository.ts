@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { Order } from './schemas/order.schema';
 import { Counter } from './schemas/counter.schema';
 import { QueryOrdersDto } from './dto/query-orders.dto';
+import { notDeletedFilter, softDeleteUpdate } from '../../common/utils/soft-delete.utils';
 
 @Injectable()
 export class OrdersRepository {
@@ -16,7 +17,7 @@ export class OrdersRepository {
     const counter = await this.counterModel.findOneAndUpdate(
       { workspaceId, name: 'order' },
       { $inc: { value: 1 } },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: 'after' },
     );
     return `ORD-${counter.value}`;
   }
@@ -29,19 +30,19 @@ export class OrdersRepository {
     workspaceId: string,
     idempotencyKey: string,
   ): Promise<Order | null> {
-    return this.orderModel.findOne({ workspaceId, idempotencyKey, deletedAt: null });
+    return this.orderModel.findOne(notDeletedFilter({ workspaceId, idempotencyKey }));
   }
 
   async findById(workspaceId: string, id: string): Promise<Order | null> {
-    return this.orderModel.findOne({ _id: id, workspaceId, deletedAt: null });
+    return this.orderModel.findOne(notDeletedFilter({ _id: id, workspaceId }));
   }
 
   async findByIds(workspaceId: string, ids: string[]): Promise<Order[]> {
-    return this.orderModel.find({ _id: { $in: ids }, workspaceId, deletedAt: null });
+    return this.orderModel.find(notDeletedFilter({ _id: { $in: ids }, workspaceId }));
   }
 
   async findMany(workspaceId: string, query: QueryOrdersDto): Promise<Order[]> {
-    const filter: Record<string, unknown> = { workspaceId, deletedAt: null };
+    const filter: Record<string, unknown> = notDeletedFilter({ workspaceId });
 
     // Apply filters
     if (query.status) filter.status = query.status;
@@ -90,9 +91,9 @@ export class OrdersRepository {
     update: Partial<Order>,
   ): Promise<Order | null> {
     return this.orderModel.findOneAndUpdate(
-      { _id: id, workspaceId, version, deletedAt: null },
+      notDeletedFilter({ _id: id, workspaceId, version }),
       { $set: { ...update, version: version + 1 } },
-      { new: true },
+      { returnDocument: 'after' },
     );
   }
 
@@ -111,30 +112,31 @@ export class OrdersRepository {
     };
 
     return this.orderModel.findOneAndUpdate(
-      { _id: id, workspaceId, version, deletedAt: null },
+      notDeletedFilter({ _id: id, workspaceId, version }),
       {
         $set: update,
         $push: { statusHistory: statusHistoryEntry },
       },
-      { new: true },
+      { returnDocument: 'after' },
     );
   }
 
   async softDelete(workspaceId: string, id: string): Promise<boolean> {
     const result = await this.orderModel.updateOne(
-      { _id: id, workspaceId, deletedAt: null },
-      { $set: { deletedAt: new Date() } },
+      notDeletedFilter({ _id: id, workspaceId }),
+      { $set: softDeleteUpdate() },
     );
     return result.modifiedCount > 0;
   }
 
   async findDeliveredOrders(workspaceId: string, orderIds: string[]): Promise<Order[]> {
-    return this.orderModel.find({
-      _id: { $in: orderIds },
-      workspaceId,
-      status: 'delivered',
-      deletedAt: null,
-    });
+    return this.orderModel.find(
+      notDeletedFilter({
+        _id: { $in: orderIds },
+        workspaceId,
+        status: 'delivered' as const,
+      }),
+    );
   }
 
   async linkOrdersToSettlement(

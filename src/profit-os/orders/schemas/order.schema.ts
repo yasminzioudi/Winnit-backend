@@ -93,13 +93,13 @@ export class Order extends Document {
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
 
-// Indexes: tenant-first, unique workspaceId+orderNumber, unique workspaceId+idempotencyKey
+// Indexes from section 4 of the brief: tenant-first compound indexes
 OrderSchema.index({ workspaceId: 1, orderNumber: 1 }, { unique: true });
-OrderSchema.index({ workspaceId: 1, status: 1 });
-OrderSchema.index({ workspaceId: 1, courier: 1 });
-OrderSchema.index({ workspaceId: 1, 'customer.governorate': 1 });
-OrderSchema.index({ workspaceId: 1, productId: 1 });
 OrderSchema.index({ workspaceId: 1, placedAt: -1 });
+OrderSchema.index({ workspaceId: 1, status: 1, placedAt: -1 });
+OrderSchema.index({ workspaceId: 1, productId: 1, placedAt: -1 });
+OrderSchema.index({ workspaceId: 1, courier: 1, status: 1 });
+OrderSchema.index({ workspaceId: 1, settlementId: 1 });
 OrderSchema.index(
   { workspaceId: 1, idempotencyKey: 1 },
   { unique: true, partialFilterExpression: { idempotencyKey: { $type: 'string' } } },

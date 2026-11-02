@@ -50,14 +50,4 @@ export class QueryOrdersDto {
   @IsString()
   @IsOptional()
   search?: string;
-
-  // Validation: reject keys starting with "$"
-  constructor() {
-    const keys = Object.keys(this);
-    for (const key of keys) {
-      if (key.startsWith('$')) {
-        throw new Error(`Invalid query parameter: ${key}`);
-      }
-    }
-  }
 }
