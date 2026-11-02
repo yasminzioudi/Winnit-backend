@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { randomBytes } from 'crypto';
 import { AppModule } from '../src/app.module';
+import { configureApp } from '../src/common/utils/configure-app';
 
 describe('API (e2e)', () => {
   let app: INestApplication;
@@ -14,27 +14,8 @@ describe('API (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
 
-    // Apply x-request-id middleware (same as main.ts)
-    app.use((req: any, res: any, next: any) => {
-      const requestId =
-        req.headers['x-request-id'] ||
-        `req_${randomBytes(12).toString('hex')}`;
-      req.headers['x-request-id'] = requestId;
-      res.setHeader('x-request-id', requestId);
-      next();
-    });
-
-    // Apply same validation pipe as main.ts
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-
-    // Global prefix
-    app.setGlobalPrefix('api/v1');
+    // Apply same configuration as main.ts
+    configureApp(app);
 
     await app.init();
   });

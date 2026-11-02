@@ -1,11 +1,10 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression from 'compression';
-import { randomBytes } from 'crypto';
 import { AppModule } from './app.module';
+import { configureApp } from './common/utils/configure-app';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -13,16 +12,6 @@ async function bootstrap() {
   });
 
   const configService = app.get(ConfigService);
-
-  // Generate x-request-id BEFORE guards run (middleware, not interceptor)
-  app.use((req: any, res: any, next: any) => {
-    const requestId =
-      req.headers['x-request-id'] ||
-      `req_${randomBytes(12).toString('hex')}`;
-    req.headers['x-request-id'] = requestId;
-    res.setHeader('x-request-id', requestId);
-    next();
-  });
 
   // Security middleware (relax CSP for Swagger)
   app.use((req: any, res: any, next: any) => {
@@ -51,20 +40,8 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Global prefix
-  app.setGlobalPrefix('api/v1');
-
-  // Global validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: false, // Explicit @Type() decorators only
-      },
-    }),
-  );
+  // Shared app configuration (middleware, pipes, prefix)
+  configureApp(app);
 
   // Swagger (disabled in production unless SWAGGER=on)
   const swaggerEnabled = configService.get<boolean>('swagger.enabled');
