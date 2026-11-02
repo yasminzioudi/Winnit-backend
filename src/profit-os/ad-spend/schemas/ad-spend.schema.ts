@@ -52,3 +52,4 @@ AdSpendSchema.index(
   { workspaceId: 1, idempotencyKey: 1 },
   { unique: true, partialFilterExpression: { idempotencyKey: { $type: 'string' } } },
 );
+

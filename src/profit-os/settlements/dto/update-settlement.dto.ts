@@ -43,3 +43,4 @@ export class UpdateSettlementDto {
   @IsOptional()
   status?: SettlementStatus;
 }
+

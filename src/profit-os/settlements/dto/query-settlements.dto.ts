@@ -14,3 +14,4 @@ export class QuerySettlementsDto extends PagePaginationDto {
   @IsOptional()
   status?: SettlementStatus;
 }
+

@@ -16,3 +16,4 @@ import { Scenario, ScenarioSchema } from './schemas/scenario.schema';
   exports: [ScenariosService, ScenariosRepository],
 })
 export class ScenariosModule {}
+

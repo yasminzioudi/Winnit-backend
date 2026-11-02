@@ -86,3 +86,4 @@ export class AdSpendController {
     await this.adSpendService.softDelete(workspaceId, id);
   }
 }
+

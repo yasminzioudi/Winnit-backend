@@ -14,3 +14,4 @@ import { Expense, ExpenseSchema } from './schemas/expense.schema';
   exports: [ExpensesService, ExpensesRepository],
 })
 export class ExpensesModule {}
+

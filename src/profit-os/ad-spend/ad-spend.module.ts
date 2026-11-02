@@ -14,3 +14,4 @@ import { AdSpend, AdSpendSchema } from './schemas/ad-spend.schema';
   exports: [AdSpendService, AdSpendRepository],
 })
 export class AdSpendModule {}
+

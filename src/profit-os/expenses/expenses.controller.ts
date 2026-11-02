@@ -86,3 +86,4 @@ export class ExpensesController {
     await this.expensesService.softDelete(workspaceId, id);
   }
 }
+

@@ -98,3 +98,4 @@ export class SettlementsController {
     await this.settlementsService.softDelete(workspaceId, id);
   }
 }
+

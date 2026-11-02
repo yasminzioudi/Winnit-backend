@@ -46,3 +46,4 @@ export class CreateScenarioDto {
   @IsOptional()
   notes?: string;
 }
+

@@ -18,3 +18,4 @@ import { OrdersModule } from '../orders/orders.module';
   exports: [SettlementsService, SettlementsRepository],
 })
 export class SettlementsModule {}
+

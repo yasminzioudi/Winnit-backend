@@ -23,3 +23,4 @@ export class QueryAdSpendDto extends PagePaginationDto {
   @IsDateString()
   to?: string;
 }
+

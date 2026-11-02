@@ -89,3 +89,4 @@ export class AdSpendRepository {
     return result.modifiedCount > 0;
   }
 }
+

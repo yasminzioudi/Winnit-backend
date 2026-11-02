@@ -13,3 +13,4 @@ export class QueryScenariosDto extends PagePaginationDto {
   @IsString()
   search?: string;
 }
+

@@ -98,3 +98,4 @@ export class ScenariosService {
     this.cacheService.invalidateWorkspace(workspaceId);
   }
 }
+

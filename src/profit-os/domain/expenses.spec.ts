@@ -143,3 +143,4 @@ describe('expenseTotalForPeriod', () => {
     expect(total).toBe(0);
   });
 });
+

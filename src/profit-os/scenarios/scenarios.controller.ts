@@ -86,3 +86,4 @@ export class ScenariosController {
     await this.scenariosService.softDelete(workspaceId, id);
   }
 }
+
