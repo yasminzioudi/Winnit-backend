@@ -5,7 +5,6 @@ import {
   calculateWaterfall,
   calculateAdSpendDelta,
   calculateLedgerNet,
-  calculateUnitEconomics,
   type OrderFinance,
 } from '../domain/finance';
 import {
@@ -14,10 +13,12 @@ import {
   type Settlement as ReconciliationSettlement,
 } from '../domain/reconciliation';
 import { expenseTotalForPeriod, type ExpenseDomain } from '../domain/expenses';
+import { calculateWinnerScore } from '../domain/winners';
 import {
-  calculateWinnerScore,
-  type ProductMetrics,
-} from '../domain/winners';
+  calculateProductMetrics,
+  type OrderForMetrics,
+  type AdSpendForMetrics,
+} from '../domain/product-metrics';
 import {
   PRODUCT_CATALOG_PORT,
   type ProductCatalogPort,
@@ -598,77 +599,82 @@ export class AnalyticsService {
       this.catalogPort.findAll(workspaceId),
     ]);
 
-    const prevVolumeMap = new Map<string, number>();
-    for (const pg of prevProductGroups) {
-      prevVolumeMap.set(pg._id, pg.totalOrders);
-    }
-
     const catalogMap = new Map<string, (typeof catalogProducts)[0]>();
     for (const p of catalogProducts) {
       catalogMap.set(p.id, p);
     }
 
-    const adSpendByProduct = new Map<string, number>();
-    for (const s of adSpends) {
-      if (!s.productId) continue;
-      const prev = adSpendByProduct.get(s.productId) ?? 0;
-      adSpendByProduct.set(s.productId, prev + s.spendMillimes);
-    }
-
     const items: WinnerRankingItem[] = productGroups.map((g) => {
       const catalog = catalogMap.get(g._id);
-      const cogs = catalog?.cogsMillimes ?? 28000;
-      const logistics =
-        (catalog?.logisticsCostPerOrderMillimes ?? 7000) +
-        (catalog?.returnShippingMillimes ?? 0);
-      const cpa = catalog?.targetCpaMillimes ?? 22000;
-      const price =
-        catalog?.sellingPriceMillimes ??
-        (g.deliveredOrders > 0
-          ? Math.round(g.grossRevenueMillimes / g.deliveredOrders)
-          : 129000);
+      const prevGroup = prevProductGroups.find(pg => pg._id === g._id);
+      
+      // Convert aggregated data into OrderForMetrics format for calculateProductMetrics
+      // We create synthetic orders representing the aggregates
+      const avgUnitPrice = g.deliveredOrders > 0 
+        ? Math.round(g.grossRevenueMillimes / g.deliveredOrders)
+        : 0;
+      const avgNetContribution = g.totalOrders > 0
+        ? Math.round(g.netContributionMillimes / g.totalOrders)
+        : 0;
+      
+      const cogs = catalog?.cogsMillimes ?? 32000;
+      const shipping = catalog?.logisticsCostPerOrderMillimes ?? 7000;
 
-      const resolved = g.deliveredOrders + g.refusedOrders;
-      const refusalRate = resolved > 0 ? g.refusedOrders / resolved : 0.2;
+      const currentOrders: OrderForMetrics[] = [
+        // Delivered orders synthetic aggregate
+        ...Array(g.deliveredOrders).fill(null).map(() => ({
+          productId: g._id,
+          status: 'delivered' as const,
+          unitPriceMillimes: avgUnitPrice,
+          unitCogsMillimes: cogs,
+          shippingMillimes: shipping,
+          quantity: 1,
+          netContributionMillimes: avgNetContribution,
+        })),
+        // Refused orders synthetic aggregate
+        ...Array(g.refusedOrders).fill(null).map(() => ({
+          productId: g._id,
+          status: 'refused' as const,
+          unitPriceMillimes: avgUnitPrice,
+          unitCogsMillimes: cogs,
+          shippingMillimes: shipping,
+          quantity: 1,
+          netContributionMillimes: avgNetContribution,
+        })),
+        // Other orders (pending/confirmed/shipped)
+        ...Array(g.totalOrders - g.deliveredOrders - g.refusedOrders).fill(null).map(() => ({
+          productId: g._id,
+          status: 'pending' as const,
+          unitPriceMillimes: avgUnitPrice,
+          unitCogsMillimes: cogs,
+          shippingMillimes: shipping,
+          quantity: 1,
+          netContributionMillimes: avgNetContribution,
+        })),
+      ];
 
-      const ue = calculateUnitEconomics({
-        priceMillimes: price,
-        cogsMillimes: cogs,
-        logisticsMillimes: logistics,
-        cpaMillimes: cpa,
-        refusalRate,
-      });
-
-      const adSpend = adSpendByProduct.get(g._id) ?? 0;
-      const actualROAS =
-        adSpend > 0 ? g.grossRevenueMillimes / adSpend : 0;
-
-      const netMarginPercent =
-        g.grossRevenueMillimes > 0
-          ? Math.round(
-              (g.netContributionMillimes / g.grossRevenueMillimes) * 1000,
-            ) / 10
-          : 0;
-
-      const prevVolume = prevVolumeMap.get(g._id) ?? 0;
-      let volumeTrend30Days = 0;
-      if (prevVolume > 0) {
-        volumeTrend30Days = (g.totalOrders - prevVolume) / prevVolume;
-      } else if (g.totalOrders > 0) {
-        volumeTrend30Days = 0.5;
-      }
-      volumeTrend30Days = Math.max(-1, Math.min(1, Math.round(volumeTrend30Days * 100) / 100));
-
-      const metrics: ProductMetrics = {
+      const prevVolume = prevGroup?.totalOrders ?? 0;
+      const previousOrders: OrderForMetrics[] = Array(prevVolume).fill(null).map(() => ({
         productId: g._id,
-        totalOrders: g.totalOrders,
-        deliveredOrders: g.deliveredOrders,
-        refusedOrders: g.refusedOrders,
-        netMarginPercent,
-        breakEvenROAS: ue.breakEvenROAS,
-        actualROAS,
-        volumeTrend30Days,
-      };
+        status: 'delivered' as const,
+        unitPriceMillimes: avgUnitPrice,
+        unitCogsMillimes: cogs,
+        shippingMillimes: shipping,
+        quantity: 1,
+        netContributionMillimes: avgNetContribution,
+      }));
+
+      const adSpendEntries: AdSpendForMetrics[] = adSpends
+        .filter((s) => s.productId === g._id)
+        .map((s) => ({ productId: s.productId, spendMillimes: s.spendMillimes }));
+
+      // CRITICAL: Call the domain function (single source of truth)
+      const metrics = calculateProductMetrics({
+        productId: g._id,
+        currentOrders,
+        previousOrders,
+        adSpends: adSpendEntries,
+      });
 
       const scoreResult = calculateWinnerScore(metrics);
 

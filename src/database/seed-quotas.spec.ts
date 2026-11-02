@@ -1,6 +1,7 @@
 import { generateSeedDataset } from './seed-generator';
 import { calculateWinnerScore } from '../profit-os/domain/winners';
-import { calculateWaterfall, calculateOrderNetContribution } from '../profit-os/domain/finance';
+import { calculateWaterfall } from '../profit-os/domain/finance';
+import { calculateProductMetrics } from '../profit-os/domain/product-metrics';
 import { expenseTotalForPeriod, type ExpenseDomain } from '../profit-os/domain/expenses';
 import {
   checkRefusalRate,
@@ -23,46 +24,23 @@ describe('Seed Dataset Quality Quotas', () => {
       (o) => o.placedAt >= sixtyDaysAgo && o.placedAt < thirtyDaysAgo,
     );
 
+    const last30DaysAdSpend = dataset.adSpends.filter(
+      (s) => s.periodStart >= thirtyDaysAgo && s.periodStart <= referenceDate,
+    );
+
     const productIds = Array.from(new Set(dataset.orders.map((o) => o.productId)));
     const scores = productIds.map((productId) => {
       const currentOrders = last30DaysOrders.filter((o) => o.productId === productId);
       const previousOrders = previous30DaysOrders.filter((o) => o.productId === productId);
       
-      const delivered = currentOrders.filter((o) => o.status === 'delivered').length;
-      const refused = currentOrders.filter((o) => o.status === 'refused').length;
-      
-      const revenue = currentOrders
-        .filter((o) => o.status === 'delivered')
-        .reduce((sum, o) => sum + o.unitPriceMillimes * o.quantity, 0);
-      const netContribution = currentOrders.reduce(
-        (sum, o) => sum + calculateOrderNetContribution(o),
-        0,
-      );
-      const netMarginPercent = revenue > 0 ? (netContribution / revenue) * 100 : 0;
-      
-      const adSpend = currentOrders.reduce((sum, o) => sum + o.adCpaMillimes, 0);
-      const actualROAS = adSpend > 0 ? revenue / adSpend : 0;
-      
-      const cogs = currentOrders.reduce((sum, o) => sum + o.unitCogsMillimes * o.quantity, 0);
-      const shipping = currentOrders.reduce((sum, o) => sum + o.shippingMillimes, 0);
-      const maxTolerableCPA = revenue - cogs - shipping;
-      const breakEvenROAS = maxTolerableCPA > 0 ? revenue / maxTolerableCPA : 0;
-      
-      const volumeTrend =
-        previousOrders.length > 0
-          ? (currentOrders.length - previousOrders.length) / previousOrders.length
-          : 0;
-
-      return calculateWinnerScore({
+      const metrics = calculateProductMetrics({
         productId,
-        totalOrders: currentOrders.length,
-        deliveredOrders: delivered,
-        refusedOrders: refused,
-        netMarginPercent,
-        breakEvenROAS,
-        actualROAS,
-        volumeTrend30Days: volumeTrend,
+        currentOrders,
+        previousOrders,
+        adSpends: last30DaysAdSpend,
       });
+
+      return calculateWinnerScore(metrics);
     });
 
     const winnerCount = scores.filter((s) => s.label === 'Winner').length;
