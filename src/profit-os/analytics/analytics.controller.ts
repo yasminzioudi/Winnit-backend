@@ -49,8 +49,8 @@ export class AnalyticsController {
   ): Promise<AnalyticsSummaryResponse> {
     return this.analyticsService.getSummary(
       workspaceId,
-      query.from,
-      query.to,
+      query.fromOrDefault,
+      query.toOrDefault,
       query.compare,
     );
   }
@@ -63,8 +63,8 @@ export class AnalyticsController {
   ): Promise<AnalyticsSummaryResponse> {
     return this.analyticsService.getSummary(
       workspaceId,
-      query.from,
-      query.to,
+      query.fromOrDefault,
+      query.toOrDefault,
       query.compare,
     );
   }
@@ -79,8 +79,8 @@ export class AnalyticsController {
   ): Promise<TimeseriesResponse> {
     return this.analyticsService.getTimeseries(
       workspaceId,
-      query.from,
-      query.to,
+      query.fromOrDefault,
+      query.toOrDefault,
       query.granularity ?? 'daily',
     );
   }
@@ -95,8 +95,8 @@ export class AnalyticsController {
   ): Promise<ProductAnalyticsItem[]> {
     return this.analyticsService.getByProduct(
       workspaceId,
-      query.from,
-      query.to,
+      query.fromOrDefault,
+      query.toOrDefault,
     );
   }
 
@@ -110,8 +110,8 @@ export class AnalyticsController {
   ): Promise<CourierAnalyticsItem[]> {
     return this.analyticsService.getByCourier(
       workspaceId,
-      query.from,
-      query.to,
+      query.fromOrDefault,
+      query.toOrDefault,
     );
   }
 
@@ -123,8 +123,8 @@ export class AnalyticsController {
   ): Promise<CourierAnalyticsItem[]> {
     return this.analyticsService.getByCourier(
       workspaceId,
-      query.from,
-      query.to,
+      query.fromOrDefault,
+      query.toOrDefault,
     );
   }
 
@@ -138,8 +138,8 @@ export class AnalyticsController {
   ): Promise<GovernorateAnalyticsItem[]> {
     return this.analyticsService.getByGovernorate(
       workspaceId,
-      query.from,
-      query.to,
+      query.fromOrDefault,
+      query.toOrDefault,
     );
   }
 
@@ -151,8 +151,8 @@ export class AnalyticsController {
   ): Promise<GovernorateAnalyticsItem[]> {
     return this.analyticsService.getByGovernorate(
       workspaceId,
-      query.from,
-      query.to,
+      query.fromOrDefault,
+      query.toOrDefault,
     );
   }
 
@@ -176,8 +176,8 @@ export class AnalyticsController {
   ): Promise<WinnerRankingItem[]> {
     return this.analyticsService.getWinners(
       workspaceId,
-      query.from,
-      query.to,
+      query.fromOrDefault,
+      query.toOrDefault,
     );
   }
 }

@@ -22,6 +22,10 @@ dotenv.config();
 const MONGODB_URI =
   process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/winnit';
 
+const SEED_REFERENCE_DATE = process.env.SEED_REFERENCE_DATE
+  ? new Date(process.env.SEED_REFERENCE_DATE)
+  : new Date();
+
 async function seed() {
   const client = new MongoClient(MONGODB_URI);
 
@@ -32,6 +36,7 @@ async function seed() {
     console.log(`========================================`);
     console.log(`🌱 WINNIT OS Profit OS: Full Deterministic Seed`);
     console.log(`🏢 Workspace: ${WORKSPACE_ID}`);
+    console.log(`📅 Reference Date: ${SEED_REFERENCE_DATE.toISOString().split('T')[0]}`);
     console.log(`========================================`);
 
     // Clean existing data for this workspace across all Profit OS collections
@@ -45,7 +50,7 @@ async function seed() {
 
     console.log('✓ Cleaned existing data for workspace across all collections');
 
-    const dataset = generateSeedDataset();
+    const dataset = generateSeedDataset(SEED_REFERENCE_DATE);
 
     // 1. Insert Orders
     await db.collection<SeedOrder>('orders').insertMany(dataset.orders);

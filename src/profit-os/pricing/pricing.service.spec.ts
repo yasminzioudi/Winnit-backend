@@ -34,10 +34,9 @@ describe('PricingService', () => {
     res.curve[0]);
     expect(res.elasticOptimumMillimes).toBe(curveMax.priceMillimes);
 
-    // Verify refusalRate is rounded to at most 4 decimals
+    // Verify refusalRate has at most 4 decimals
     for (const point of res.curve) {
-      const decimals = point.refusalRate.toString().split('.')[1]?.length ?? 0;
-      expect(decimals).toBeLessThanOrEqual(4);
+      expect(Math.round(point.refusalRate * 10000) / 10000).toBe(point.refusalRate);
     }
   });
 

@@ -514,4 +514,45 @@ describe('Analytics & Insights API (e2e)', () => {
       expect(res.body.type).toBe('https://winnit.tn/errors/400');
     });
   });
+
+  describe('Default date ranges (last 30 days)', () => {
+    it('GET /api/v1/analytics/summary with no params defaults to last 30 days', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/analytics/summary')
+        .set('x-workspace-id', WORKSPACE_A)
+        .expect(200);
+
+      expect(res.body).toHaveProperty('waterfall');
+      expect(res.body).toHaveProperty('period');
+      expect(res.body.period).toHaveProperty('from');
+      expect(res.body.period).toHaveProperty('to');
+    });
+
+    it('GET /api/v1/analytics/winners with no params defaults to last 30 days', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/analytics/winners')
+        .set('x-workspace-id', WORKSPACE_A)
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+    });
+
+    it('GET /api/v1/insights with no params defaults to last 30 days', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/insights')
+        .set('x-workspace-id', WORKSPACE_A)
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+    });
+
+    it('GET /api/v1/analytics/by-product with no params defaults to last 30 days', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/analytics/by-product')
+        .set('x-workspace-id', WORKSPACE_A)
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+    });
+  });
 });

@@ -33,13 +33,10 @@ export class InsightsController {
     @CurrentWorkspace() workspaceId: string,
     @Query() query: DateRangeQueryDto,
   ): Promise<Insight[]> {
-    const now = new Date();
-    const defaultFrom = new Date(now.getTime() - 30 * 86400000).toISOString();
-    const defaultTo = now.toISOString();
-
-    const from = query.from || defaultFrom;
-    const to = query.to || defaultTo;
-
-    return this.insightsService.getInsights(workspaceId, from, to);
+    return this.insightsService.getInsights(
+      workspaceId,
+      query.fromOrDefault,
+      query.toOrDefault,
+    );
   }
 }

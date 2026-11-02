@@ -27,7 +27,7 @@ export const CATALOG_PRODUCTS = [
     cpa: 21400,
     courier: 'yalidine' as const,
     refusalAdj: -0.06,
-    spendFactor: 0.5,
+    spendFactor: 0.70,
   },
   {
     id: 'prd_002',
@@ -39,7 +39,7 @@ export const CATALOG_PRODUCTS = [
     cpa: 26000,
     courier: 'yalidine' as const,
     refusalAdj: -0.07,
-    spendFactor: 0.45,
+    spendFactor: 0.65,
   },
   {
     id: 'prd_003',
@@ -51,7 +51,7 @@ export const CATALOG_PRODUCTS = [
     cpa: 38000,
     courier: 'aramex' as const,
     refusalAdj: 0.09,
-    spendFactor: 6.0,
+    spendFactor: 0.88,
   },
   {
     id: 'prd_004',
@@ -63,7 +63,7 @@ export const CATALOG_PRODUCTS = [
     cpa: 45000,
     courier: 'aramex' as const,
     refusalAdj: 0.08,
-    spendFactor: 5.5,
+    spendFactor: 0.82,
   },
   {
     id: 'prd_005',
@@ -75,7 +75,7 @@ export const CATALOG_PRODUCTS = [
     cpa: 24000,
     courier: 'yalidine' as const,
     refusalAdj: 0.00,
-    spendFactor: 1.5,
+    spendFactor: 0.76,
   },
   {
     id: 'prd_006',
@@ -87,7 +87,7 @@ export const CATALOG_PRODUCTS = [
     cpa: 15000,
     courier: 'yalidine' as const,
     refusalAdj: 0.01,
-    spendFactor: 1.8,
+    spendFactor: 0.79,
   },
   {
     id: 'prd_007',
@@ -99,7 +99,7 @@ export const CATALOG_PRODUCTS = [
     cpa: 20000,
     courier: 'aramex' as const,
     refusalAdj: 0.10,
-    spendFactor: 6.5,
+    spendFactor: 0.94,
   },
   {
     id: 'prd_008',
@@ -111,7 +111,7 @@ export const CATALOG_PRODUCTS = [
     cpa: 28000,
     courier: 'yalidine' as const,
     refusalAdj: -0.06,
-    spendFactor: 0.5,
+    spendFactor: 0.73,
   },
   {
     id: 'prd_009',
@@ -123,7 +123,7 @@ export const CATALOG_PRODUCTS = [
     cpa: 42000,
     courier: 'aramex' as const,
     refusalAdj: 0.00,
-    spendFactor: 1.4,
+    spendFactor: 0.67,
   },
   {
     id: 'prd_010',
@@ -135,7 +135,7 @@ export const CATALOG_PRODUCTS = [
     cpa: 26000,
     courier: 'yalidine' as const,
     refusalAdj: -0.05,
-    spendFactor: 0.5,
+    spendFactor: 0.70,
   },
   {
     id: 'prd_011',
@@ -147,7 +147,7 @@ export const CATALOG_PRODUCTS = [
     cpa: 32000,
     courier: 'aramex' as const,
     refusalAdj: 0.09,
-    spendFactor: 6.0,
+    spendFactor: 0.85,
   },
   {
     id: 'prd_012',
@@ -159,7 +159,7 @@ export const CATALOG_PRODUCTS = [
     cpa: 22000,
     courier: 'yalidine' as const,
     refusalAdj: 0.01,
-    spendFactor: 1.6,
+    spendFactor: 0.73,
   },
 ];
 
