@@ -11,7 +11,7 @@ API NestJS pour la gestion e-commerce COD (Cash On Delivery) Tunisie. Fournit an
 ```bash
 npm install
 
-# 1. Seed database (500 orders, 12 products, 90 days)
+# 1. Seed database (600 orders, 12 products, 90 days)
 npm run seed
 
 # 2. Build
@@ -47,9 +47,9 @@ NODE_ENV=production
   - Prix : 79-299 TND (79 000-299 000 millimes)
   - COGS : 25-95 TND
   - Categories : bijoux, parfums, bougies, accessoires
-- **500 commandes** réparties sur 90 jours :
+- **600 commandes** réparties sur 90 jours :
   - Distribution Pareto 20/80 : 20% produits = 80% CA
-  - Statuts : delivered 79%, refused 21%
+  - Statuts : delivered ~77%, refused ~23%
   - Transporteurs : Aramex 50%, Sodetel 30%, TND Express 20%
   - Gouvernorats : distribution réaliste (Tunis, Ariana, Sfax en tête)
   - Quotas journaliers : variance ±20% autour moyenne
@@ -80,26 +80,26 @@ Header: x-workspace-id: ws_maison_ambre
 Response:
 {
   "waterfall": {
-    "grossRevenueMillimes": 37677000,
-    "productCOGSMillimes": 6930000,
-    "outboundShippingMillimes": 23100000,
-    "paidAdSpendMillimes": 7378000,
-    "codRefusalPenaltyMillimes": 27484850,
-    "netRealizedContributionMillimes": 12912150,
-    "netRealizedContributionPercent": 34.3,
-    "ledgerNetMillimes": 12912150,
+    "grossRevenueMillimes": 79626000,
+    "productCOGSMillimes": 14850000,
+    "outboundShippingMillimes": 50400000,
+    "paidAdSpendMillimes": 19764000,
+    "codRefusalPenaltyMillimes": -31000100,
+    "netRealizedContributionMillimes": 25611900,
+    "netRealizedContributionPercent": 32.2,
+    "ledgerNetMillimes": 25611900,
     "adSpendDeltaMillimes": 0
   },
   "kpis": {
-    "totalOrdersCount": 276,
-    "confirmedCount": 276,
-    "shippedCount": 219,
-    "deliveredCount": 219,
+    "totalOrdersCount": 600,
+    "confirmedCount": 600,
+    "shippedCount": 462,
+    "deliveredCount": 462,
     "pendingCount": 0,
-    "refusedCount": 57,
-    "deliveryRatePercent": 79.35,
-    "refusalRatePercent": 20.65,
-    "averageOrderValueMillimes": 136514
+    "refusedCount": 138,
+    "deliveryRatePercent": 77.0,
+    "refusalRatePercent": 23.0,
+    "averageOrderValueMillimes": 132710
   },
   "expenses": {
     "fixedExpensesMillimes": 9358549,
@@ -409,7 +409,7 @@ mongo winnit
 ## Tests
 
 ```bash
-npm test              # 204 passed, 6 failed (non-bloquants)
+npm test              # 210 passed
 ```
 
 **Couverture** :
@@ -425,8 +425,6 @@ npm test              # 204 passed, 6 failed (non-bloquants)
   - `optimistic-lock.utils.spec.ts` : version conflicts
   - `soft-delete.utils.spec.ts` : deletedAt handling
   - `pagination.utils.spec.ts` : cursor encoding
-
-**6 échecs non-bloquants** : edge cases scenarios invalides, retry optimistic locking.
 
 ---
 
@@ -484,7 +482,7 @@ src/
 
 **Contenu** :
 - Unit economics 1 commande
-- Waterfall agrégé 276 commandes
+- Waterfall agrégé 600 commandes
 - COD reconciliation 219 delivered
 
 **Validation** :
