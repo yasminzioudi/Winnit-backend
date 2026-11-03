@@ -21,145 +21,145 @@ export const CATALOG_PRODUCTS = [
     id: 'prd_001',
     name: "Aura d'Ambre Extrait (50ml)",
     price: 129000,
-    cogs: 32000,
+    cogs: 28000,
     shipping: 7000,
     returnShipping: 7000,
     cpa: 21400,
     courier: 'yalidine' as const,
     refusalAdj: -0.06,
-    spendFactor: 0.55,
+    spendFactor: 0.5,
   },
   {
     id: 'prd_002',
     name: "Aura d'Ambre Duo Bundle",
     price: 229000,
-    cogs: 62000,
+    cogs: 52000,
     shipping: 7000,
     returnShipping: 7000,
     cpa: 26000,
     courier: 'yalidine' as const,
     refusalAdj: -0.07,
-    spendFactor: 0.50,
+    spendFactor: 0.45,
   },
   {
     id: 'prd_003',
     name: 'Lumina Obsidian Articulated Desk Lamp',
     price: 249000,
-    cogs: 88000,
+    cogs: 65000,
     shipping: 12000,
     returnShipping: 12000,
     cpa: 38000,
     courier: 'aramex' as const,
-    refusalAdj: 0.11,
-    spendFactor: 1.20,
+    refusalAdj: 0.09,
+    spendFactor: 6.0,
   },
   {
     id: 'prd_004',
     name: 'Saddle Leather Travel Duffle',
     price: 320000,
-    cogs: 120000,
+    cogs: 88000,
     shipping: 15000,
     returnShipping: 15000,
     cpa: 45000,
     courier: 'aramex' as const,
-    refusalAdj: 0.12,
-    spendFactor: 1.30,
+    refusalAdj: 0.08,
+    spendFactor: 5.5,
   },
   {
     id: 'prd_005',
     name: 'Velvet Rose Night Serum (30ml)',
     price: 149000,
-    cogs: 42000,
+    cogs: 35000,
     shipping: 8000,
     returnShipping: 8000,
     cpa: 24000,
     courier: 'yalidine' as const,
-    refusalAdj: 0.02,
-    spendFactor: 0.68,
+    refusalAdj: 0.00,
+    spendFactor: 1.5,
   },
   {
     id: 'prd_006',
     name: 'Silk Touch Wireless Charging Stand',
     price: 89000,
-    cogs: 28000,
+    cogs: 22000,
     shipping: 6000,
     returnShipping: 6000,
     cpa: 15000,
     courier: 'yalidine' as const,
     refusalAdj: 0.01,
-    spendFactor: 0.72,
+    spendFactor: 1.8,
   },
   {
     id: 'prd_007',
     name: 'Marrakesh Clay Diffuser Set',
     price: 119000,
-    cogs: 38000,
+    cogs: 28000,
     shipping: 9000,
     returnShipping: 9000,
     cpa: 20000,
     courier: 'aramex' as const,
-    refusalAdj: 0.13,
-    spendFactor: 1.35,
+    refusalAdj: 0.10,
+    spendFactor: 6.5,
   },
   {
     id: 'prd_008',
     name: 'Sahara Gold Cuff Bracelet',
     price: 179000,
-    cogs: 52000,
+    cogs: 42000,
     shipping: 6000,
     returnShipping: 6000,
     cpa: 28000,
     courier: 'yalidine' as const,
-    refusalAdj: -0.05,
-    spendFactor: 0.60,
+    refusalAdj: -0.06,
+    spendFactor: 0.5,
   },
   {
     id: 'prd_009',
     name: 'Atlas Merino Wool Throw',
     price: 269000,
-    cogs: 95000,
+    cogs: 78000,
     shipping: 10000,
     returnShipping: 10000,
     cpa: 42000,
     courier: 'aramex' as const,
-    refusalAdj: 0.03,
-    spendFactor: 0.58,
+    refusalAdj: 0.00,
+    spendFactor: 1.4,
   },
   {
     id: 'prd_010',
     name: 'Midnight Oud Cologne (100ml)',
     price: 159000,
-    cogs: 46000,
+    cogs: 38000,
     shipping: 8000,
     returnShipping: 8000,
     cpa: 26000,
     courier: 'yalidine' as const,
-    refusalAdj: -0.04,
-    spendFactor: 0.58,
+    refusalAdj: -0.05,
+    spendFactor: 0.5,
   },
   {
     id: 'prd_011',
     name: 'Tunis Blue Ceramic Vase (Large)',
     price: 199000,
-    cogs: 85000,
+    cogs: 52000,
     shipping: 14000,
     returnShipping: 14000,
     cpa: 32000,
     courier: 'aramex' as const,
-    refusalAdj: 0.14,
-    spendFactor: 1.40,
+    refusalAdj: 0.09,
+    spendFactor: 6.0,
   },
   {
     id: 'prd_012',
     name: 'Jasmine Night Candle Collection (3-pack)',
     price: 139000,
-    cogs: 40000,
+    cogs: 32000,
     shipping: 10000,
     returnShipping: 10000,
     cpa: 22000,
     courier: 'yalidine' as const,
-    refusalAdj: 0.02,
-    spendFactor: 0.65,
+    refusalAdj: 0.01,
+    spendFactor: 1.6,
   },
 ];
 
@@ -178,42 +178,6 @@ export const FIRST_NAMES = [
   'Yassine', 'Sarra', 'Mehdi', 'Ines', 'Karim', 'Amira',
   'Mohamed', 'Nour', 'Hamza', 'Meriem', 'Fares', 'Rim',
   'Walid', 'Hela', 'Anis', 'Cyrine', 'Aziz', 'Syrine',
-];
-
-// EXPLICIT QUOTA TABLE: deterministic order counts per product per window
-// 3 Winner, 2 À surveiller, 2 À couper, 2 Données insuffisantes, 3 free
-interface ProductQuota {
-  productId: string;
-  orders30d: number; // Last 30 days
-  ordersPrev30d: number; // 30-60 days ago (controls trend)
-  ordersOld: number; // 60-90 days ago
-  refusalRate: number; // Target refusal rate for this product (applied to all windows)
-  cpa: number; // CPA millimes (adjusted to hit ad spend 25-30%)
-}
-
-// Iteration 8 FINAL-c: ad spend 25% requires CPAs +2-3k across Winners/free
-export const PRODUCT_QUOTAS: ProductQuota[] = [
-  // 3 Winners: score ≥75, growing trend, low refusal 4-8%, CPA 29-32k
-  { productId: 'prd_001', orders30d: 30, ordersPrev30d: 22, ordersOld: 3, refusalRate: 0.05, cpa: 29000 }, // Winner
-  { productId: 'prd_008', orders30d: 32, ordersPrev30d: 24, ordersOld: 4, refusalRate: 0.04, cpa: 32000 }, // Winner
-  { productId: 'prd_012', orders30d: 28, ordersPrev30d: 21, ordersOld: 3, refusalRate: 0.06, cpa: 29000 }, // Winner
-  
-  // 2 À surveiller: score 50-74, flat trend, refusal 25-29%, CPA 30-20k
-  { productId: 'prd_005', orders30d: 26, ordersPrev30d: 26, ordersOld: 4, refusalRate: 0.26, cpa: 30000 }, // À surveiller
-  { productId: 'prd_006', orders30d: 27, ordersPrev30d: 27, ordersOld: 3, refusalRate: 0.25, cpa: 20000 }, // À surveiller
-  
-  // 2 À couper: score <50, declining trend, refusal 44-46%, high CPA 40-37k
-  { productId: 'prd_003', orders30d: 25, ordersPrev30d: 32, ordersOld: 4, refusalRate: 0.46, cpa: 40000 }, // À couper
-  { productId: 'prd_011', orders30d: 26, ordersPrev30d: 33, ordersOld: 3, refusalRate: 0.44, cpa: 37000 }, // À couper
-  
-  // 2 Données insuffisantes: orders30d 8-15, CPA 30-45k
-  { productId: 'prd_002', orders30d: 10, ordersPrev30d: 9, ordersOld: 2, refusalRate: 0.15, cpa: 30000 },
-  { productId: 'prd_009', orders30d: 12, ordersPrev30d: 11, ordersOld: 2, refusalRate: 0.12, cpa: 45000 },
-  
-  // 3 free products: CPA 54k/28k/35k
-  { productId: 'prd_004', orders30d: 22, ordersPrev30d: 20, ordersOld: 3, refusalRate: 0.27, cpa: 54000 },
-  { productId: 'prd_007', orders30d: 24, ordersPrev30d: 23, ordersOld: 3, refusalRate: 0.24, cpa: 28000 },
-  { productId: 'prd_010', orders30d: 26, ordersPrev30d: 25, ordersOld: 5, refusalRate: 0.22, cpa: 35000 },
 ];
 
 export interface SeedOrder extends OrderFinance {
@@ -342,175 +306,79 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
 
   const now = referenceDate;
   const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
-  // 1. Generate 600 Orders using EXPLICIT QUOTAS
+  // 1. Generate 600 Orders
+  const TOTAL_ORDERS = 600;
   const orders: SeedOrder[] = [];
-  let orderCounter = 1;
 
-  // Generate orders per product per window (deterministic)
-  for (const quota of PRODUCT_QUOTAS) {
-    const product = CATALOG_PRODUCTS.find((p) => p.id === quota.productId)!;
-
-    // Generate orders for three windows: days 0-30, 30-60, 60-90
-    const windows = [
-      { count: quota.orders30d, startDate: thirtyDaysAgo, endDate: now }, // Last 30 days
-      { count: quota.ordersPrev30d, startDate: sixtyDaysAgo, endDate: new Date(thirtyDaysAgo.getTime() - 1) }, // 30-60 days ago
-      { count: quota.ordersOld, startDate: ninetyDaysAgo, endDate: new Date(sixtyDaysAgo.getTime() - 1) }, // 60-90 days ago
-    ];
-
-    for (const window of windows) {
-      const refusedCount = Math.round(window.count * quota.refusalRate);
-
-      for (let i = 0; i < window.count; i++) {
-        const gov = randomChoice(GOVERNORATES);
-        const firstName = randomChoice(FIRST_NAMES);
-        const courier: 'yalidine' | 'aramex' = product.courier;
-
-        // Spread dates deterministically within window
-        const progress = window.count > 1 ? i / (window.count - 1) : 0.5;
-        const placedAt = new Date(
-          window.startDate.getTime() +
-            progress * (window.endDate.getTime() - window.startDate.getTime()),
-        );
-
-        // Deterministic refusal: first refusedCount orders are refused
-        const isRefused = i < refusedCount;
-        const daysSincePlaced = (now.getTime() - placedAt.getTime()) / (24 * 60 * 60 * 1000);
-
-        let status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'refused' | 'cancelled';
-        if (daysSincePlaced > 3) {
-          // Orders > 3 days old are all resolved
-          status = isRefused ? 'refused' : 'delivered';
-        } else {
-          // Recent orders (<= 3 days): only 10% pending/in-transit
-          const r = randomInt(0, 9);
-          if (r === 0) {
-            status = randomInt(0, 1) === 0 ? 'pending' : 'confirmed';
-          } else {
-            status = isRefused ? 'refused' : 'delivered';
-          }
-        }
-
-        const quantity = 1;
-        const shippingMillimes = product.shipping;
-        const returnShippingMillimes = status === 'refused' ? product.returnShipping : 0;
-        const courierFeeMillimes = courier === 'aramex' ? 2000 : 0;
-        const adCpaMillimes = quota.cpa;
-
-        const orderFinance: OrderFinance = {
-          unitPriceMillimes: product.price,
-          unitCogsMillimes: product.cogs,
-          quantity,
-          shippingMillimes,
-          returnShippingMillimes,
-          courierFeeMillimes,
-          adCpaMillimes,
-          status,
-        };
-        const netContributionMillimes = calculateOrderNetContribution(orderFinance);
-
-        const deliveredAt =
-          status === 'delivered'
-            ? new Date(
-                Math.min(
-                  now.getTime(),
-                  placedAt.getTime() + randomInt(2, 5) * 24 * 60 * 60 * 1000,
-                ),
-              )
-            : undefined;
-
-        const statusHistory: Array<{
-          status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'refused' | 'cancelled';
-          changedAt: Date;
-          changedBy: string;
-        }> = [
-          {
-            status: 'pending',
-            changedAt: placedAt,
-            changedBy: 'system',
-          },
-        ];
-        if (status === 'delivered' || status === 'refused') {
-          statusHistory.push({
-            status,
-            changedAt: deliveredAt ?? new Date(placedAt.getTime() + 24 * 60 * 60 * 1000),
-            changedBy: 'system',
-          });
-        }
-
-        const order: SeedOrder = {
-          _id: `65f${orderCounter.toString(16).padStart(21, '0')}`,
-          workspaceId: WORKSPACE_ID,
-          orderNumber: `ORD-${orderCounter}`,
-          productId: product.id,
-          productNameSnapshot: product.name,
-          quantity,
-          unitPriceMillimes: product.price,
-          unitCogsMillimes: product.cogs,
-          shippingMillimes,
-          returnShippingMillimes,
-          courierFeeMillimes,
-          adCpaMillimes,
-          courier,
-          customer: {
-            firstName,
-            city: gov.city,
-            governorate: gov.name,
-          },
-          status,
-          statusHistory,
-          placedAt,
-          deliveredAt,
-          netContributionMillimes,
-          version: 1,
-          deletedAt: null,
-          createdAt: placedAt,
-          updatedAt: placedAt,
-        };
-
-        orders.push(order);
-        orderCounter++;
-      }
-    }
-  }
-
-  // Fill days 60-90 to reach 600 total orders, computed refusal rate for 22.8% global target
-  const currentTotal = orders.length;
-  const remainingOrders = 600 - currentTotal;
-  const currentRefused = orders.filter((o) => o.status === 'refused').length;
-  
-  // Compute exact refusal rate needed for 60-90 day block
-  // Target: 22.8% of 588 resolved = 134 total refused
-  // We have currentRefused from 0-60 days, need to distribute rest over remaining orders
-  const targetTotalRefused = 134; // 22.8% of 588
-  const remainingRefused = Math.max(0, targetTotalRefused - currentRefused);
-  
-  // Distribute remaining orders across products proportionally
-  for (let i = 0; i < remainingOrders; i++) {
-    const quotaIndex = i % PRODUCT_QUOTAS.length;
-    const quota = PRODUCT_QUOTAS[quotaIndex];
-    const product = CATALOG_PRODUCTS.find((p) => p.id === quota.productId)!;
-
+  for (let i = 1; i <= TOTAL_ORDERS; i++) {
     const gov = randomChoice(GOVERNORATES);
     const firstName = randomChoice(FIRST_NAMES);
-    const courier: 'yalidine' | 'aramex' = product.courier;
 
-    const progress = remainingOrders > 1 ? i / (remainingOrders - 1) : 0.5;
+    // Courier distribution: 55% Yalidine, 45% Aramex
+    const courier: 'yalidine' | 'aramex' = rand() < 0.55 ? 'yalidine' : 'aramex';
+
+    // Order placed timestamp over 90 days
+    // Weight slightly towards recent days
+    const timeProgress = Math.pow(rand(), 0.85);
     const placedAt = new Date(
-      ninetyDaysAgo.getTime() + progress * (new Date(sixtyDaysAgo.getTime() - 1).getTime() - ninetyDaysAgo.getTime()),
+      ninetyDaysAgo.getTime() +
+        timeProgress * (now.getTime() - ninetyDaysAgo.getTime()),
     );
 
-    const isRefused = i < remainingRefused;
-    const status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'refused' | 'cancelled' =
-      isRefused ? 'refused' : 'delivered';
+    // Uniform product distribution ensures every product has ~50 orders across 90d (>= 20 in 30d window)
+    const product = CATALOG_PRODUCTS[(i - 1) % CATALOG_PRODUCTS.length];
+
+    const daysSincePlaced = (now.getTime() - placedAt.getTime()) / (24 * 60 * 60 * 1000);
+
+    // Refusal probability: base 0.205 (20.5%) + courier modifier (+0.095 Aramex, -0.06 Yalidine) + gov modifier + product modifier
+    const courierRefusalMod = courier === 'aramex' ? 0.095 : -0.06;
+    const refusalProb = 0.205 + courierRefusalMod + gov.refusalAdj + (product.refusalAdj ?? 0);
+
+    let status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'refused' | 'cancelled';
+
+    if (daysSincePlaced > 7) {
+      // Historical orders are resolved
+      if (rand() < 0.02) {
+        status = 'cancelled';
+      } else if (rand() < refusalProb) {
+        status = 'refused';
+      } else {
+        status = 'delivered';
+      }
+    } else if (daysSincePlaced > 3) {
+      // Mid-transit orders
+      const roll = rand();
+      if (roll < refusalProb * 0.7) {
+        status = 'refused';
+      } else if (roll < 0.55) {
+        status = 'delivered';
+      } else if (roll < 0.85) {
+        status = 'shipped';
+      } else {
+        status = 'confirmed';
+      }
+    } else {
+      // Recent orders (< 3 days)
+      const roll = rand();
+      if (roll < 0.25) {
+        status = 'pending';
+      } else if (roll < 0.60) {
+        status = 'confirmed';
+      } else if (roll < 0.85) {
+        status = 'shipped';
+      } else if (roll < 0.95) {
+        status = 'delivered';
+      } else {
+        status = 'refused';
+      }
+    }
 
     const quantity = 1;
     const shippingMillimes = product.shipping;
     const returnShippingMillimes = status === 'refused' ? product.returnShipping : 0;
     const courierFeeMillimes = courier === 'aramex' ? 2000 : 0;
-    const adCpaMillimes = quota.cpa;
+    const adCpaMillimes = product.cpa;
 
     const orderFinance: OrderFinance = {
       unitPriceMillimes: product.price,
@@ -526,7 +394,12 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
 
     const deliveredAt =
       status === 'delivered'
-        ? new Date(placedAt.getTime() + randomInt(2, 5) * 24 * 60 * 60 * 1000)
+        ? new Date(
+            Math.min(
+              now.getTime(),
+              placedAt.getTime() + randomInt(2, 5) * 24 * 60 * 60 * 1000,
+            ),
+          )
         : undefined;
 
     const statusHistory: Array<{
@@ -534,9 +407,13 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
       changedAt: Date;
       changedBy: string;
     }> = [
-      { status: 'pending', changedAt: placedAt, changedBy: 'system' },
+      {
+        status: 'pending',
+        changedAt: placedAt,
+        changedBy: 'system',
+      },
     ];
-    if (status === 'delivered' || status === 'refused') {
+    if (status !== 'pending') {
       statusHistory.push({
         status,
         changedAt: deliveredAt ?? new Date(placedAt.getTime() + 24 * 60 * 60 * 1000),
@@ -544,10 +421,10 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
       });
     }
 
-    const order: SeedOrder = {
-      _id: `65f${orderCounter.toString(16).padStart(21, '0')}`,
+    const order = {
+      _id: `65f${i.toString(16).padStart(21, '0')}`,
       workspaceId: WORKSPACE_ID,
-      orderNumber: `ORD-${orderCounter}`,
+      orderNumber: `ORD-${i}`,
       productId: product.id,
       productNameSnapshot: product.name,
       quantity,
@@ -575,7 +452,6 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
     };
 
     orders.push(order);
-    orderCounter++;
   }
 
   // 2. Courier Settlements (Settle most >30d orders, realistic pending share, some >14d)
@@ -682,70 +558,51 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
     o.settlementId = '65fa10000000000000000004';
   }
 
-  // 3. Ad Spend entries: per product, sum of order CPAs in window + small unattributed share
-  // Total should be 25-30% of 30-day gross revenue
+  // 3. Ad Spend entries across the 90 days
+  // Daily / bi-daily campaign records
   const adSpends: SeedAdSpend[] = [];
   const platforms = ['facebook', 'tiktok', 'google', 'instagram'];
+  let currentDay = new Date(ninetyDaysAgo);
   let spendCounter = 1;
 
-  // Group orders by product and day
-  const ordersByProductDay = new Map<string, Map<string, SeedOrder[]>>();
-  for (const order of orders) {
-    const dayKey = order.placedAt.toISOString().split('T')[0];
-    
-    if (!ordersByProductDay.has(order.productId)) {
-      ordersByProductDay.set(order.productId, new Map());
-    }
-    const productMap = ordersByProductDay.get(order.productId)!;
-    if (!productMap.has(dayKey)) {
-      productMap.set(dayKey, []);
-    }
-    productMap.get(dayKey)!.push(order);
-  }
+  while (currentDay.getTime() <= now.getTime()) {
+    const nextDay = new Date(currentDay.getTime() + 24 * 60 * 60 * 1000);
+    // 2-3 platform spend entries per day
+    const entriesCount = randomInt(2, 3);
+    for (let j = 0; j < entriesCount; j++) {
+      const platform = platforms[j % platforms.length];
+      const prod = CATALOG_PRODUCTS[spendCounter % CATALOG_PRODUCTS.length];
+      const baseSpend = randomInt(70000, 150000); // 70 to 150 TND/day base
+      const spendMillimes = Math.round(baseSpend * (prod.spendFactor ?? 1.0));
 
-  // Generate ad spend entries per product per day, matching order CPAs
-  for (const [productId, dayMap] of ordersByProductDay) {
-    const product = CATALOG_PRODUCTS.find((p) => p.id === productId)!;
-    const daysSorted = Array.from(dayMap.keys()).sort();
-    
-    for (const dayKey of daysSorted) {
-      const dayOrders = dayMap.get(dayKey)!;
-      const totalCpaMillimes = dayOrders.reduce((sum, o) => sum + o.adCpaMillimes, 0);
-      
-      // Add 5% unattributed buffer
-      const spendMillimes = Math.round(totalCpaMillimes * 1.05);
-      
-      const platform = platforms[spendCounter % platforms.length];
-      const periodStart = new Date(dayKey + 'T00:00:00Z');
-      const periodEnd = new Date(periodStart.getTime() + 24 * 60 * 60 * 1000);
-      
       adSpends.push({
         _id: `65fb${spendCounter.toString(16).padStart(20, '0')}`,
         workspaceId: WORKSPACE_ID,
         platform,
-        campaignName: `${product.name.split(' ')[0]} Acquisition ${platform.toUpperCase()}`,
-        periodStart,
-        periodEnd,
+        campaignName: `${prod.name.split(' ')[0]} Acquisition ${platform.toUpperCase()}`,
+        periodStart: currentDay,
+        periodEnd: nextDay,
         spendMillimes,
         currency: 'TND',
-        productId,
-        notes: `Automated ad spend import for ${product.name}`,
+        productId: prod.id,
+        notes: `Automated ad spend import for ${prod.name}`,
         version: 1,
-        createdAt: periodStart,
-        updatedAt: periodStart,
+        createdAt: currentDay,
+        updatedAt: currentDay,
       });
       spendCounter++;
     }
+    currentDay = nextDay;
   }
 
-  // 4. Six monthly fixed expense types (reduced to 8-12% of typical gross)
+  // 4. Six monthly fixed expense types
   const expenses: SeedExpense[] = [
     {
       _id: '65fc00000000000000000001',
       workspaceId: WORKSPACE_ID,
       category: 'rent' as const,
       description: 'Loyer Bureau & Entrepôt La Marsa',
-      amountMillimes: 800000, // 800 TND / month
+      amountMillimes: 1500000, // 1,500 TND / month
       periodType: 'monthly' as const,
       startDate: new Date('2025-11-01T00:00:00Z'),
       version: 1,
@@ -755,7 +612,7 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
       workspaceId: WORKSPACE_ID,
       category: 'salary' as const,
       description: 'Salaire Direction & Stratégie',
-      amountMillimes: 1200000, // 1,200 TND / month
+      amountMillimes: 2500000, // 2,500 TND / month
       periodType: 'monthly' as const,
       startDate: new Date('2025-11-01T00:00:00Z'),
       version: 1,
@@ -765,7 +622,7 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
       workspaceId: WORKSPACE_ID,
       category: 'salary' as const,
       description: 'Salaire Gestionnaire Commandes & Service Client',
-      amountMillimes: 600000, // 600 TND / month
+      amountMillimes: 1200000, // 1,200 TND / month
       periodType: 'monthly' as const,
       startDate: new Date('2025-11-01T00:00:00Z'),
       version: 1,
@@ -775,7 +632,7 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
       workspaceId: WORKSPACE_ID,
       category: 'utilities' as const,
       description: 'Fibre Optique, Électricité & Eau',
-      amountMillimes: 200000, // 200 TND / month
+      amountMillimes: 350000, // 350 TND / month
       periodType: 'monthly' as const,
       startDate: new Date('2025-11-01T00:00:00Z'),
       version: 1,
@@ -785,7 +642,7 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
       workspaceId: WORKSPACE_ID,
       category: 'logistics' as const,
       description: 'Abonnement Plateforme WMS & Emballages Premium',
-      amountMillimes: 200000, // 200 TND / month
+      amountMillimes: 400000, // 400 TND / month
       periodType: 'monthly' as const,
       startDate: new Date('2025-11-01T00:00:00Z'),
       version: 1,
@@ -795,7 +652,7 @@ export function generateSeedDataset(referenceDate = new Date()): SeedDataset {
       workspaceId: WORKSPACE_ID,
       category: 'marketing' as const,
       description: 'Shopify Pro, Canva Pro & Outils Tracking',
-      amountMillimes: 150000, // 150 TND / month
+      amountMillimes: 250000, // 250 TND / month
       periodType: 'monthly' as const,
       startDate: new Date('2025-11-01T00:00:00Z'),
       version: 1,
