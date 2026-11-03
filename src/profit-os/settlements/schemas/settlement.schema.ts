@@ -1,11 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 
 export type SettlementStatus = 'pending' | 'settled';
 export type CourierType = 'aramex' | 'yalidine';
 
+export type SettlementDocument = HydratedDocument<Settlement>;
+
 @Schema({ collection: 'settlements', timestamps: true })
-export class Settlement extends Document {
+export class Settlement {
+  @Prop({ type: String })
+  _id: string;
+
   @Prop({ required: true, index: true })
   workspaceId: string;
 
@@ -46,6 +51,9 @@ export class Settlement extends Document {
 }
 
 export const SettlementSchema = SchemaFactory.createForClass(Settlement);
+
+SettlementSchema.set('_id', false);
+SettlementSchema.set('id', false);
 
 // Compound tenant-first indexes
 SettlementSchema.index({ workspaceId: 1, status: 1 });
