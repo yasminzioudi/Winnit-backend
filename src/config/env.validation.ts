@@ -26,6 +26,14 @@ export class EnvironmentVariables {
 
   @IsString()
   DEV_WORKSPACE_ID: string;
+
+  @IsOptional()
+  @IsString()
+  GEMINI_API_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  GEMINI_MODEL?: string;
 }
 
 export function validate(config: Record<string, unknown>) {
