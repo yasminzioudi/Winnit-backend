@@ -14,11 +14,13 @@ export class GeminiClient implements LlmProvider {
   private readonly logger = new Logger(GeminiClient.name);
   private readonly apiKey?: string;
   private readonly model: string;
-  private readonly timeoutMs = 15000;
+  private readonly timeoutMs: number;
+  private readonly fallbackModel = 'gemini-3.1-flash-lite';
 
   constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('ai.geminiApiKey');
     this.model = this.configService.get<string>('ai.geminiModel') || 'gemini-1.5-flash';
+    this.timeoutMs = this.configService.get<number>('ai.timeoutMs') || 30000;
   }
 
   isAvailable(): boolean {
@@ -31,7 +33,7 @@ export class GeminiClient implements LlmProvider {
 
   /**
    * Generates content using Google Gemini API via Node native fetch.
-   * Includes 15 s timeout and 1 retry on 429/5xx with backoff.
+   * Includes 30 s timeout and 1 retry on 429/5xx with backoff.
    * Never logs API key or raw prompts to protect privacy.
    */
   async generate(prompt: string, schema?: Record<string, unknown>): Promise<string> {
@@ -45,7 +47,7 @@ export class GeminiClient implements LlmProvider {
       temperature: 0.2,
       maxOutputTokens: 8192,
       thinkingConfig: {
-        thinkingBudget: 1024,
+        thinkingBudget: 0,
       },
     };
 
@@ -63,6 +65,8 @@ export class GeminiClient implements LlmProvider {
       ],
       generationConfig,
     };
+
+    this.logger.log(`Prompt size: ${prompt.length} characters`);
 
     return this.executeWithRetry(url, requestBody);
   }
@@ -108,6 +112,8 @@ export class GeminiClient implements LlmProvider {
     body: Record<string, unknown>,
     attempt = 1,
   ): Promise<string> {
+    const attemptTimeout =
+      attempt === 1 ? Math.min(this.timeoutMs, 12000) : this.timeoutMs;
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -115,7 +121,7 @@ export class GeminiClient implements LlmProvider {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(this.timeoutMs),
+        signal: AbortSignal.timeout(attemptTimeout),
       });
 
       if (!response.ok) {
@@ -124,12 +130,25 @@ export class GeminiClient implements LlmProvider {
 
         // Retry once on rate limit (429) or transient server error (5xx)
         if ((status === 429 || status >= 500) && attempt === 1) {
-          const backoffMs = status === 429 ? 2000 : 1000;
+          const backoffMs = status === 429 ? 1000 : 1000;
           this.logger.warn(
             `Gemini API transient failure (HTTP ${status}). Retrying in ${backoffMs}ms...`,
           );
           await new Promise((resolve) => setTimeout(resolve, backoffMs));
-          return this.executeWithRetry(url, body, attempt + 1);
+          // If status is 503 (model overloaded) or 429 (rate/quota limit), switch to fast fallback model
+          const nextUrl =
+            (status === 503 || status === 429) && !url.includes(this.fallbackModel)
+              ? url.replace(/models\/[^:]+:/, `models/${this.fallbackModel}:`)
+              : url;
+          return this.executeWithRetry(nextUrl, body, attempt + 1);
+        }
+
+        if (status === 401 || status === 403 || status === 404) {
+          const configErr = new Error(
+            `Gemini API configuration error (${status}): ${errorText.substring(0, 200)}`,
+          );
+          configErr.name = 'ConfigurationError';
+          throw configErr;
         }
 
         throw new Error(
@@ -143,7 +162,19 @@ export class GeminiClient implements LlmProvider {
             parts?: Array<{ text?: string }>;
           };
         }>;
+        usageMetadata?: {
+          promptTokenCount?: number;
+          candidatesTokenCount?: number;
+          totalTokenCount?: number;
+          thoughtsTokenCount?: number;
+        };
       };
+
+      if (result.usageMetadata) {
+        this.logger.log(
+          `usageMetadata: promptTokenCount=${result.usageMetadata.promptTokenCount}, thoughtsTokenCount=${result.usageMetadata.thoughtsTokenCount}, candidatesTokenCount=${result.usageMetadata.candidatesTokenCount}`,
+        );
+      }
 
       const candidate = result.candidates?.[0];
       const text = candidate?.content?.parts?.[0]?.text;
@@ -154,8 +185,22 @@ export class GeminiClient implements LlmProvider {
 
       return text;
     } catch (err) {
+      if (
+        err instanceof Error &&
+        err.name === 'TimeoutError' &&
+        attempt === 1 &&
+        !url.includes(this.fallbackModel)
+      ) {
+        this.logger.warn('Gemini primary model timed out. Retrying with fallback model...');
+        const nextUrl = url.replace(/models\/[^:]+:/, `models/${this.fallbackModel}:`);
+        return this.executeWithRetry(nextUrl, body, attempt + 1);
+      }
+
       if (err instanceof Error && err.name === 'TimeoutError') {
-        throw new Error('Gemini API call timed out after 15 s');
+        const sec = Math.round(this.timeoutMs / 1000);
+        const timeoutErr = new Error(`Gemini API call timed out after ${sec} s`);
+        timeoutErr.name = 'TimeoutError';
+        throw timeoutErr;
       }
       throw err;
     }

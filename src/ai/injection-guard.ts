@@ -4,6 +4,8 @@ const INJECTION_PATTERNS = [
   /ignore\s+(all\s+)?(previous|above)\s+instructions/i,
   /system\s+prompt/i,
   /api[_\s-]?key/i,
+  /cl[ée][_\s-]?api/i,
+  /api[_\s-]?cl[ée]/i,
   /secret/i,
   /disregard\s+(all\s+)?instructions/i,
   /you\s+are\s+now/i,

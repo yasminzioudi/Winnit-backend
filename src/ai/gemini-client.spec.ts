@@ -82,7 +82,7 @@ describe('GeminiClient', () => {
     expect(body.generationConfig.responseMimeType).toBe('application/json');
     expect(body.generationConfig.responseSchema).toEqual(schema);
     expect(body.generationConfig.maxOutputTokens).toBe(8192);
-    expect(body.generationConfig.thinkingConfig.thinkingBudget).toBe(1024);
+    expect(body.generationConfig.thinkingConfig.thinkingBudget).toBe(0);
   });
 
   it('treats empty candidate text as an error that triggers fallback', async () => {
