@@ -146,14 +146,20 @@ QUESTION DU DIRIGEANT:
     let rawResult: string;
     try {
       rawResult = await this.generateWithSnapshot(workspaceId, systemPrompt, snapshot, schema);
+      if (!rawResult || rawResult.trim().length === 0) {
+        throw new HttpException(
+          'Copilote indisponible — configurez votre clé Gemini',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
     } catch (err) {
       if (err instanceof HttpException) {
         throw err;
       }
       this.logger.error(`AI generation error: ${(err as Error).message}`);
       throw new HttpException(
-        'Erreur lors de la génération de la réponse du Copilote.',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        'Copilote indisponible — configurez votre clé Gemini',
+        HttpStatus.SERVICE_UNAVAILABLE,
       );
     }
 

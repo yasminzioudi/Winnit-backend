@@ -43,7 +43,10 @@ export class GeminiClient implements LlmProvider {
 
     const generationConfig: Record<string, unknown> = {
       temperature: 0.2,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 8192,
+      thinkingConfig: {
+        thinkingBudget: 1024,
+      },
     };
 
     if (schema) {
@@ -145,8 +148,8 @@ export class GeminiClient implements LlmProvider {
       const candidate = result.candidates?.[0];
       const text = candidate?.content?.parts?.[0]?.text;
 
-      if (!text) {
-        throw new Error('Gemini API returned an empty response');
+      if (!text || text.trim().length === 0) {
+        throw new Error('Gemini API returned an empty response: IA indisponible');
       }
 
       return text;

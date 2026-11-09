@@ -81,6 +81,22 @@ describe('GeminiClient', () => {
 
     expect(body.generationConfig.responseMimeType).toBe('application/json');
     expect(body.generationConfig.responseSchema).toEqual(schema);
+    expect(body.generationConfig.maxOutputTokens).toBe(8192);
+    expect(body.generationConfig.thinkingConfig.thinkingBudget).toBe(1024);
+  });
+
+  it('treats empty candidate text as an error that triggers fallback', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: jest.fn().mockResolvedValue({
+        candidates: [{ content: { parts: [{ text: '' }] } }],
+      }),
+    });
+
+    await expect(client.generate('test empty')).rejects.toThrow(
+      'Gemini API returned an empty response: IA indisponible',
+    );
   });
 
   it('retries once on 429 status code with backoff', async () => {

@@ -116,4 +116,44 @@ describe('FigureVerifier & Zero-Hallucination Guard', () => {
     // Caveat appended to answer
     expect(result.adjustedAnswer).toContain("Certains chiffres n'ont pas pu être vérifiés avec certitude");
   });
+
+  it('STRIPS a figure whose value equals an unrelated snapshot value but with the wrong source', () => {
+    // 25.6 is valid in snapshot.summary.expenses.netProfitMarginPercent
+    // But the figure claims source 'summary.kpis' / label 'Taux de refus' (actual refusal rate is 23.3%)
+    const figures = [
+      {
+        label: 'Taux de refus',
+        value: 25.6,
+        unit: '%',
+        source: 'summary.kpis.refusalRatePercent',
+      },
+    ];
+    const answer = 'Votre taux de refus calculé est de 25.6%.';
+
+    const result = verifyFigures(figures, mockSnapshot, answer);
+
+    // 25.6 does NOT match the claimed source kpis (23.3%), so it must be stripped
+    expect(result.isVerified).toBe(false);
+    expect(result.verifiedFigures).toHaveLength(0);
+    expect(result.strippedFigures).toHaveLength(1);
+    expect(result.strippedFigures[0].value).toBe(25.6);
+    expect(result.adjustedAnswer).toContain("Certains chiffres n'ont pas pu être vérifiés avec certitude");
+  });
+
+  it('FLAGS answer as non vérifié when a hallucinated number exists ONLY in the text', () => {
+    // Structured figure is completely valid and verified
+    const figures = [
+      { label: 'Net Profit', value: 32000, unit: 'TND', source: 'expenses' },
+    ];
+    // Free text introduces a hallucinated unverified cost of 888 888 TND
+    const answer =
+      'Votre profit net est de 32 000 TND, mais une charge fantôme de 888 888 TND a été observée.';
+
+    const result = verifyFigures(figures, mockSnapshot, answer);
+
+    expect(result.isVerified).toBe(false);
+    expect(result.verifiedFigures).toHaveLength(1); // structured verified figure kept
+    expect(result.unverifiedTextNumbers).toContain(888888);
+    expect(result.adjustedAnswer).toContain("Certains chiffres n'ont pas pu être vérifiés avec certitude");
+  });
 });

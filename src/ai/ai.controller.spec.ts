@@ -196,6 +196,23 @@ describe('AiController (Copilote CFO)', () => {
     }
   });
 
+  it('FAILS SOFT with HTTP 503 when provider returns empty candidate text', async () => {
+    fakeLlm.setMockResponse('   ');
+
+    try {
+      await controller.ask('ws_maison_ambre', {
+        question: 'Quelle est ma marge nette ?',
+        from: '2026-01-01',
+        to: '2026-03-31',
+      });
+      fail('Expected 503 Service Unavailable');
+    } catch (err) {
+      expect(err).toBeInstanceOf(HttpException);
+      expect((err as HttpException).getStatus()).toBe(HttpStatus.SERVICE_UNAVAILABLE);
+      expect((err as HttpException).message).toContain('Copilote indisponible');
+    }
+  });
+
   it('REJECTS invalid date range (to < from) with HTTP 400', async () => {
     await expect(
       controller.ask('ws_maison_ambre', {
