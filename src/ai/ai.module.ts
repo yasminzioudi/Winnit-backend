@@ -7,9 +7,11 @@ import { GeminiClient } from './gemini-client';
 import { FinancialSnapshotBuilder } from './financial-snapshot.builder';
 import { AiCacheService } from './ai-cache.service';
 import { AiService } from './ai.service';
+import { AiController } from './ai.controller';
 
 @Module({
   imports: [ConfigModule, AnalyticsModule, InsightsModule],
+  controllers: [AiController],
   providers: [
     GeminiClient,
     {

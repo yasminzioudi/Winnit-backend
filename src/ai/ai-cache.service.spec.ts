@@ -69,3 +69,4 @@ describe('AiCacheService & Throttler', () => {
     expect(() => cacheService.checkThrottle('ws_beta')).not.toThrow();
   });
 });
+

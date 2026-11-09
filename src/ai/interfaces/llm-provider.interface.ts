@@ -11,3 +11,4 @@ export interface LlmProvider {
   isAvailable(): boolean;
   generate(prompt: string, schema?: Record<string, unknown>): Promise<string>;
 }
+

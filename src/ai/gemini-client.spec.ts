@@ -108,3 +108,4 @@ describe('GeminiClient', () => {
     expect(callCount).toBe(2);
   });
 });
+
